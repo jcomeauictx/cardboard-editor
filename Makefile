@@ -5,6 +5,7 @@ ANDROID_TOOLS := $(ANDROID_SDK_ROOT)/build-tools/debian
 PLATFORM := /usr/lib/android-sdk/platforms/android-23/android.jar
 SOURCES = $(wildcard src/com/jcomeau/cardboard-editor/*.java)
 CLASSES = $(SOURCES:.java=.class)
+MIN_SDK ?= 18
 APP := Keyboard
 
 $(APP).apk: $(APP).aligned.apk keystore.jks
@@ -21,9 +22,9 @@ $(APP).unsigned.apk: dex/classes.dex AndroidManifest.xml
 
 dex/classes.dex: $(CLASSES)
 	[ -e dex ] || mkdir dex
-	$(ANDROIDSDK)/dx --dex --verbose --min-sdk-version=$(MINSDK) --output=$@ src
+	$(ANDROID_TOOLS)/dx --dex --verbose --min-sdk-version=$(MIN_SDK) --output=$@ src
 
-$(dirname $(SOURCES))/HelloWorld.class: $(SOURCES)
+$(dirname $(SOURCES))/Keyboard.class: $(SOURCES)
 	javac \
 	 -bootclasspath $(PLATFORM) \
 	 -classpath src \
