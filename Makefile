@@ -3,12 +3,15 @@ SHELL := /bin/bash
 ANDROID_SDK_ROOT ?= /usr/lib/android-sdk
 ANDROID_TOOLS := $(ANDROID_SDK_ROOT)/build-tools/debian
 PLATFORM := /usr/lib/android-sdk/platforms/android-23/android.jar
-SOURCES = $(wildcard src/com/jcomeau/cardboard-editor/*.java)
+SOURCES = $(wildcard src/com/jcomeau/cardboard_editor/*.java)
 CLASSES = $(SOURCES:.java=.class)
 MIN_SDK ?= 18
 APPS := Keyboard Viewer
 
-all: $(APPS:=.apk)
+all: $(dirname $(SOURCES))/R.java $(APPS:=.apk)
+
+edit:
+	vi $(SOURCES) Makefile
 
 %.apk: %.aligned.apk keystore.jks
 	apksigner sign \
@@ -48,16 +51,22 @@ dex/classes.dex: $(CLASSES) dex
 	 --min-sdk-version=$(MIN_SDK) \
 	 --output=$@ src
 
-$(dirname $(SOURCES))/Keyboard.class: $(SOURCES)
+%.class: %.java
 	javac \
 	 -bootclasspath $(PLATFORM) \
 	 -classpath src \
 	 -source 1.7 \
 	 -target 1.7 \
-	 $^
+	 $(SOURCES)
 
 $(dirname $(SOURCES))/R.java: AndroidManifest.xml res/*
-	aapt package -f -m -J src -S res -M AndroidManifest.xml -I $(PLATFORM)
+	aapt package \
+	 -f \
+	 -m \
+	 -J src \
+	 -S res \
+	 -M AndroidManifest.xml \
+	 -I $(PLATFORM)
 
 clean:
 	rm -vf	$(dirname $(SOURCES))/R.java \
