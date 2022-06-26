@@ -1,4 +1,4 @@
-package com.jcomeau.android-editor;
+package com.jcomeau.cardboard_editor;
 
 import android.app.Activity;
 import android.os.Bundle;
