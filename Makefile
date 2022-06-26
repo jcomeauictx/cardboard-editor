@@ -34,11 +34,11 @@ keystore.jks:
 %.aligned.apk: %.unsigned.apk
 	zipalign -f -p 4 $< $@
 
-%.unsigned.apk: dex/classes.dex AndroidManifest.xml
+%.unsigned.apk: dex/classes.dex %.xml
 	aapt package -f -v \
 	 -F $@ \
 	 -I $(PLATFORM) \
-	 -M AndroidManifest.xml \
+	 -M $(word 2, $^) \
 	 -S res dex
 
 dex:
