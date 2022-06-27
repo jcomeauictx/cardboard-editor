@@ -8,8 +8,7 @@ public class Keyboard extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
+        setContentView(R.layout.viewer);
         TextView text = (TextView)findViewById(R.id.splash);
         text.setText("Cardboard editor keyboard");
     }
