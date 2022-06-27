@@ -7,13 +7,15 @@ SOURCES = $(wildcard src/com/jcomeau/cardboard_editor/*.java)
 CLASSES = $(SOURCES:.java=.class)
 MIN_SDK ?= 18
 APPS := Keyboard Viewer
+MANIFEST := AndroidManifest.xml
 
-all: $(dirname $(SOURCES))/R.java $(APPS:=.apk)
+all:
+	$(foreach app,$(APPS),$(MAKE) APP=$(app) $(app).apk;)
 
 edit:
 	vi $(SOURCES) Makefile
 
-%.apk: %.aligned.apk keystore.jks
+%.apk: %.aligned.apk keystore.jks $(dirname $(SOURCES))/R.java
 	apksigner sign \
 	 --ks keystore.jks \
 	 --ks-key-alias androidkey \
@@ -34,7 +36,7 @@ keystore.jks:
 %.aligned.apk: %.unsigned.apk
 	zipalign -f -p 4 $< $@
 
-%.unsigned.apk: dex/classes.dex %.xml
+%.unsigned.apk: dex/classes.dex $(MANIFEST)
 	aapt package -f -v \
 	 -F $@ \
 	 -I $(PLATFORM) \
@@ -51,6 +53,9 @@ dex/classes.dex: $(CLASSES) dex
 	 --min-sdk-version=$(MIN_SDK) \
 	 --output=$@ src
 
+$(MANIFEST): $(APP).xml .FORCE
+	ln -sf $< $@
+
 %.class: %.java
 	javac \
 	 -bootclasspath $(PLATFORM) \
@@ -59,13 +64,13 @@ dex/classes.dex: $(CLASSES) dex
 	 -target 1.7 \
 	 $(SOURCES)
 
-$(dirname $(SOURCES))/R.java: AndroidManifest.xml res/*
+$(dirname $(SOURCES))/R.java: $(MANIFEST) res/*
 	aapt package \
 	 -f \
 	 -m \
 	 -J src \
 	 -S res \
-	 -M AndroidManifest.xml \
+	 -M $< \
 	 -I $(PLATFORM)
 
 clean:
@@ -84,3 +89,5 @@ squeaky-clean: distclean
 	@echo 'You have 5 seconds to press CTRL-C'
 	@sleep 5
 	rm -vf *.jks
+
+.FORCE:
