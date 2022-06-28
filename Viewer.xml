@@ -3,7 +3,7 @@
  package="com.jcomeau.cardboard_editor"
  versionCode="0"
  versionName="0">
-    <uses-sdk android:minSdkVersion="23"/>
+    <uses-sdk android:minSdkVersion="23" android:targetSdkVersion="28"/>
     <application android:label="Viewer">
         <activity android:name=".Viewer">
              <intent-filter>
