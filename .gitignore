@@ -1,4 +1,6 @@
 *.class
+*.apk
+AndroidManifest.xml
 R.java
 dex
 hello-world-debian-android
