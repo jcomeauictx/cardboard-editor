@@ -1,0 +1,2 @@
+all: xtest.py
+	./$<
