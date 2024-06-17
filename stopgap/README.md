@@ -7,5 +7,5 @@ Android has Termux and X Server; iPhone has iSH and Mocha X11 (lite and pro, the
 Will start with both the keyboard and viewer on the same device, then on different devices, and finally try splitting the screen to make the Cardboard goggles usable.
 
 ## Developer notes
-* any nontrivial tkinter code segfaults in FcFontRenderPrepare
+* any nontrivial tkinter code segfaults in FcFontRenderPrepare in /usr/lib/libfontconfig.so.1
 * [strace no help](https://github.com/sharkdp/bat/issues/2575)
