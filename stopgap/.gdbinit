@@ -1,4 +1,4 @@
-# segfaults at 0xf76e7cfa
+# segfaults at 0xf76e7cfa (backtrace #0)
 set breakpoint pending on
 break FcFontRenderPrepare
 # 0xf76e5ad0, backtrace #5
@@ -12,7 +12,7 @@ break *0xf76e8ff3
 break *0xf76e8f61
 # backtrace #1
 break *0xf76e849e
-continue
+#continue
 end
 display /i $eip
 run xtest.py
