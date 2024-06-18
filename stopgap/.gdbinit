@@ -4,6 +4,7 @@ break FcFontRenderPrepare
 # 0xf76e5ad0, backtrace #5
 # set breakpoint here because memory addresses not available until library is loaded
 commands
+set breakpoint pending off
 # backtrace #4
 break *0xf76e92c0
 # backtrace #3
