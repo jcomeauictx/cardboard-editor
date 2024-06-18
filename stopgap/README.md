@@ -9,3 +9,4 @@ Will start with both the keyboard and viewer on the same device, then on differe
 ## Developer notes
 * any nontrivial tkinter code segfaults in FcFontRenderPrepare in /usr/lib/libfontconfig.so.1
 * [strace no help](https://github.com/sharkdp/bat/issues/2575)
+* [ministrace](https://blog.nelhage.com/2010/08/write-yourself-an-strace-in-70-lines-of-code/)
