@@ -6,6 +6,10 @@ Android has Termux and X Server; iPhone has iSH and Mocha X11 (lite and pro, the
 
 Will start with both the keyboard and viewer on the same device, then on different devices, and finally try splitting the screen to make the Cardboard goggles usable.
 
-2024-06-21, giving up on iSH/Mocha, can't figure out the segfault in Tkinter.
+## Developer notes
+* any nontrivial tkinter code segfaults in FcFontRenderPrepare in /usr/lib/libfontconfig.so.1
+* [strace no help](https://github.com/sharkdp/bat/issues/2575)
+* [ministrace](https://blog.nelhage.com/2010/08/write-yourself-an-strace-in-70-lines-of-code/)
+* 2024-06-21, giving up on iSH/Mocha, can't figure out the segfault in tkinter.
 Going to switch to Python backend and browser (Safari) foreground. I can do
 the same on Android with Chrome.
