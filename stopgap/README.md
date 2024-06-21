@@ -13,3 +13,4 @@ Will start with both the keyboard and viewer on the same device, then on differe
 * 2024-06-21, giving up on iSH/Mocha, can't figure out the segfault in tkinter.
 Going to switch to Python backend and browser (Safari) foreground. I can do
 the same on Android with Chrome.
+* [use this as a guide](https://www.geeksforgeeks.org/build-a-virtual-keyboard-using-html-css-javascript/)
