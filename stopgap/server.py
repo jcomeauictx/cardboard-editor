@@ -3,18 +3,25 @@
 server for stopgap implementation
 '''
 import logging, time
-from http.server import CGIHTTPServer
+from http.server import CGIHTTPRequestHandler, ThreadingHTTPServer, test
 from threading import Thread
 
-def background:
+def background():
     '''
     run in separate thread to keep server active while browser in foreground
     '''
-    with open('/dev/location') as infile:
-        location = infile.read()
-        logging.debug('location: %s', location)
+    try:
+        with open('/dev/location') as infile:
+            while True:
+                location = infile.read()
+                logging.debug('location: %s', location)
+    except FileNotFoundError:
+        logging.debug('no /dev/location file found')
 
 if __name__ == '__main__':
     Thread(target=background).start()
-    while True:
-        time.sleep(10)
+    test(
+        HandlerClass=CGIHTTPRequestHandler,
+        port=8080,
+        bind='0.0.0.0',
+    )
