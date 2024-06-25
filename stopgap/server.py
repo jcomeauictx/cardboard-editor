@@ -18,7 +18,7 @@ def background():
             location = infile.read()
             logging.debug('location: %s', location)
 
-def launch(path):
+def dispatch(path):
     '''
     launch server or handle CGI script
     '''
@@ -36,4 +36,4 @@ def launch(path):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG if __debug__ else logging.INFO)
-    launch(sys.argv[0])
+    dispatch(sys.argv[0])
