@@ -2,7 +2,8 @@
 '''
 server for stopgap implementation
 '''
-import logging, time
+import sys, logging, time
+import posixpath as httppath
 from http.server import CGIHTTPRequestHandler as cgi_handler, test as serve
 from threading import Thread
 from select import select
@@ -17,11 +18,22 @@ def background():
             location = infile.read()
             logging.debug('location: %s', location)
 
-if __name__ == '__main__':
+def launch(path):
+    '''
+    launch server or handle CGI script
+    '''
     logging.basicConfig(level=logging.DEBUG if __debug__ else logging.INFO)
     Thread(target=background).start()
-    logging.debug('launching HTTP server')
-    cgi_handler.cgi_directories.insert(0, '/')
-    serve(
-        HandlerClass=cgi_handler,
-    )
+    command = httppath.splitext(httppath.split(path)[1])[0]
+    logging.debug('command: %s', command)
+    if command == 'server':
+        logging.debug('launching HTTP server')
+        serve(
+            HandlerClass=cgi_handler
+        )
+    else:
+        print('content-type: text/html\r\n\r\n', end='')
+        print('okey-dokey')
+
+if __name__ == '__main__':
+    launch(sys.argv[0])
