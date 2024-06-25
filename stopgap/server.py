@@ -22,12 +22,11 @@ def launch(path):
     '''
     launch server or handle CGI script
     '''
-    logging.basicConfig(level=logging.DEBUG if __debug__ else logging.INFO)
-    Thread(target=background).start()
     command = httppath.splitext(httppath.split(path)[1])[0]
     logging.debug('command: %s', command)
     if command == 'server':
         logging.debug('launching HTTP server')
+        Thread(target=background).start()
         serve(
             HandlerClass=cgi_handler
         )
@@ -36,4 +35,5 @@ def launch(path):
         print('okey-dokey')
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG if __debug__ else logging.INFO)
     launch(sys.argv[0])
