@@ -3,7 +3,7 @@
 server for stopgap implementation
 '''
 import logging, time
-from http.server import CGIHTTPRequestHandler, test as serve
+from http.server import CGIHTTPRequestHandler as cgi_handler, test as serve
 from threading import Thread
 from select import select
 
@@ -21,6 +21,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG if __debug__ else logging.INFO)
     Thread(target=background).start()
     logging.debug('launching HTTP server')
+    cgi_handler.cgi_directories.insert(0, '/')
     serve(
-        HandlerClass=CGIHTTPRequestHandler,
+        HandlerClass=cgi_handler,
     )
