@@ -3,10 +3,10 @@
 server for stopgap implementation
 '''
 import logging, time
-from http.server import CGIHTTPServer
+from http.server import CGIHTTPRequestHandler, test as serve
 from threading import Thread
 
-def background:
+def background():
     '''
     run in separate thread to keep server active while browser in foreground
     '''
@@ -18,3 +18,6 @@ if __name__ == '__main__':
     Thread(target=background).start()
     while True:
         time.sleep(10)
+    serve(
+        HandlerClass=CGIHTTPRequestHandler,
+    )

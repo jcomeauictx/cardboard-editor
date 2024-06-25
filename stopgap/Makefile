@@ -8,3 +8,5 @@ strace.debug:
 	$(MAKE) GDB='gdb --nx --args' xtest.log
 xtest.log: xtest.py
 	$(GDB) strace -f -v -o $@ -s 512 python3 $<
+serve: server.py
+	./$<
