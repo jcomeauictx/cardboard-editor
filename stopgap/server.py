@@ -14,9 +14,11 @@ def background():
     '''
     with open('/dev/location') as infile:
         logging.debug('keepalive thread launched in background')
-        while select([infile], [], []):
+        while select([infile], [], [infile]):
             location = infile.read()
-            logging.debug('location: %s', location)
+            logging.debug('location: %r', location)
+            if not location:
+                break
 
 def dispatch(path):
     '''
@@ -26,10 +28,13 @@ def dispatch(path):
     logging.debug('command: %s', command)
     if command == 'server':
         logging.debug('launching HTTP server')
-        Thread(target=background).start()
-        serve(
-            HandlerClass=cgi_handler
-        )
+        keepalive = Thread(target=background)
+        keepalive.start()
+        try:
+            serve(HandlerClass=cgi_handler)
+        except KeyboardInterrupt:
+            keepalive.stop()
+            sys.exit(0)
     else:
         print('content-type: text/html\r\n\r\n', end='')
         print('okey-dokey')
