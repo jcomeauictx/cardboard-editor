@@ -1,7 +1,8 @@
 document.onload = function() {
     var editwindow = document.getElementById("edit-window")
     var disregard = function(event) {return false};
-    ["click", "focus", "touchstart"].forEach(function(eventname) {
+    var eventlist = ["click", "mousedown", "mouseup", "focus", "focusin", "touchstart"];
+    eventlist.forEach(function(eventname) {
         editwindow.addEventListener(eventname, disregard, false);
     });
 }
