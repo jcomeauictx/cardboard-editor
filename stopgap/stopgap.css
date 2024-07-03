@@ -1,3 +1,7 @@
+.container {
+	width: 100vw;
+	height: 100vh;
+}
 .display {
 	width: 100%;
 	height: 50%;
