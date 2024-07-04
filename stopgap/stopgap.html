@@ -1,9 +1,25 @@
+<html lang="en">
+<head>
+<title>Editor</title>
+<meta charset="utf-8">
+<meta name="viewport"
+  content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=0">
 <link rel="stylesheet" href="stopgap.css">
+<script src="stopgap.js"></script>
+</head>
+<body>
 <div class="container">
   <div class="display">
-  Display goes here
+  <textarea id="edit-window"
+    class="editor"
+    readonly
+    inputmode="none"
+    placeholder="(Text being edited goes here.)">
+  </textarea>
   </div>
   <div class="keyboard">
   Keyboard goes here
   </div>
 </div>
+</body>
+</html>
