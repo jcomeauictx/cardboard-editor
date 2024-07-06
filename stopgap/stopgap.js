@@ -1,6 +1,6 @@
-document.addEventListener("load", function() {
+window.addEventListener("load", function() {
     console.log("Compatibility mode: " + document.compatMode);
-    var editwindow = document.getElementById("edit-window")
+    var editwindow = document.getElementById("edit-window");
     var disregard = function(event) {return false};
     var eventlist = [
         "click", "mousedown", "mouseup", "focus", "focusin", "touchstart"
