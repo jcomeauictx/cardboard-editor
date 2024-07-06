@@ -16,5 +16,6 @@ body {
 	resize: none;
 }
 .keyboard {
+	padding: 0.5em 0em 0.5em 0em;
 	height: 50%;
 }
