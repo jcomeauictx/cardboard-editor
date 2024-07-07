@@ -5,7 +5,7 @@ window.addEventListener("load", function() {
     var eventlist = [
         "click", "mousedown", "mouseup", "focus", "focusin", "touchstart"
     ];
-    eventlist.forEach(function(eventname) {
+    if (false) eventlist.forEach(function(eventname) {
         editwindow.addEventListener(eventname, disregard, false);
     });
 }, false);
