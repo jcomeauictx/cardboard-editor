@@ -1,12 +1,12 @@
 window.addEventListener("load", function() {
-    console.log("Compatibility mode: " + document.compatMode);
-    var editwindow = document.getElementById("edit-window");
-    var disregard = function(event) {return false};
-    var eventlist = [
-        "click", "mousedown", "mouseup", "focus", "focusin", "touchstart"
-    ];
-    if (false) eventlist.forEach(function(eventname) {
-        editwindow.addEventListener(eventname, disregard, false);
+    const editWindow = document.getElementById("edit-window");
+    const caretPosition = {
+        start: editWindow.selectionStart;
+        end: editWindow.selectionEnd;
+    };
+    editWindow.addEventListener("focusout", function() {
+        caretPosition.start = editWindow.selectionStart;
+        caretPosition.end = editWindow.selectionEnd;
     });
 }, false);
 console.log("stopgap.js loaded");
