@@ -2,7 +2,11 @@ window.addEventListener("load", function() {
     const editWindow = document.getElementById("edit-window");
     const background = document.getElementById("background");
     const fakeCaret = document.getElementById("fake-caret");
-    let styles = ["padding", "borderWidth", "borderStyle", "margin"];
+    //let styles = ["padding", "borderWidth", "borderStyle", "margin"];
+    let styles = ["borderWidth"];
+    styles.forEach(function(style) {
+        background.style[style] = getComputedStyle(editWindow)[style];
+    });
     const caretPosition = {
         start: editWindow.selectionStart,
         end: editWindow.selectionEnd
