@@ -10,6 +10,8 @@ window.addEventListener("load", function() {
     editWindow.addEventListener("focusout", function() {
         caretPosition.start = editWindow.selectionStart;
         caretPosition.end = editWindow.selectionEnd;
+        console.debug("caretPosition: ", caretPosition);
     });
 }, false);
 console.log("stopgap.js loaded");
+// vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
