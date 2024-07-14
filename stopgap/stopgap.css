@@ -18,10 +18,12 @@ body {
 	max-width: 100%;
 	max-height: 100%;
 	resize: none;
+	color: black;
 }
 .background {
-	border-color: transparent;
+	border-color: red;
 	/* other border attributes will be copied from editor window */
+	color: red;
 	z-index: -1;  /* behind the editor textarea */
 }
 .keyboard {
@@ -33,5 +35,5 @@ body {
 	50% {border-right: 1px solid red;}
 }
 span#fake-caret {
-	animation: blink .5s step-end infinite alternate
+	animation: blink .5s step-end infinite alternate;
 }
