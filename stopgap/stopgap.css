@@ -36,5 +36,5 @@ body {
 }
 span#fake-caret {
 	border-right: 1px solid transparent;
-	animation: blink .5s step-end infinite alternate;
+	animation: blink 1s step-end infinite alternate;
 }
