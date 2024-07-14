@@ -3,7 +3,7 @@ window.addEventListener("load", function() {
     const background = document.getElementById("background");
     const fakeCaret = document.getElementById("fake-caret");
     //let styles = ["padding", "borderWidth", "borderStyle", "margin"];
-    let styles = ["borderWidth"];
+    let styles = ["borderWidth", "margin"];
     styles.forEach(function(style) {
         background.style[style] = getComputedStyle(editWindow)[style];
     });
