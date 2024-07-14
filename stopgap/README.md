@@ -14,3 +14,4 @@ Will start with both the keyboard and viewer on the same device, then on differe
 Going to switch to Python backend and browser (Safari) foreground. I can do
 the same on Android with Chrome.
 * [use this as a guide](https://www.geeksforgeeks.org/build-a-virtual-keyboard-using-html-css-javascript/)
+* [inserting text into textarea](https://phuoc.ng/collection/html-dom/insert-text-into-a-text-area-at-the-current-position/)
