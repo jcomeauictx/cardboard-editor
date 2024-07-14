@@ -32,8 +32,9 @@ body {
 }
 /* http://www.multipetros.gr/posts/728-blink-elements-border-the-css-way/ */
 @keyframes blink {
-	50% {border-right: 1px solid red;}
+	50% {border-right-color: red;}
 }
 span#fake-caret {
+	border-right: 1px solid transparent;
 	animation: blink .5s step-end infinite alternate;
 }
