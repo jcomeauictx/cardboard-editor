@@ -20,6 +20,8 @@ body {
 	resize: none;
 }
 .background {
+	border-color: transparent;
+	/* other border attributes will be copied from editor window */
 	z-index: -1;  /* behind the editor textarea */
 }
 .keyboard {
@@ -28,8 +30,8 @@ body {
 }
 /* http://www.multipetros.gr/posts/728-blink-elements-border-the-css-way/ */
 @keyframes blink {
-	50% {border-right: 1px solid #00ff00;}
+	50% {border-right: 1px solid #007f00;}
 }
-span.fake-caret {
+span#fake-caret {
 	animation: blink .5s step-end infinite alternate
 }
