@@ -16,11 +16,12 @@ window.addEventListener("load", function() {
         caretPosition.start = editWindow.selectionStart;
         caretPosition.end = editWindow.selectionEnd;
         console.debug("caretPosition: ", caretPosition);
-        background.replaceChildren([
+        background.replaceChildren(
             document.createTextNode(editText.substring(0, caretPosition.end)),
             fakeCaret,
             document.createTextNode(editText.substring(caretPosition.end))
-        ])
+        )
+        fakeCaret.style.display = "inline";
     });
 }, false);
 console.log("stopgap.js loaded");
