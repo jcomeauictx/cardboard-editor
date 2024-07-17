@@ -1,4 +1,14 @@
 window.addEventListener("load", function() {
+    replaceChildren = function(element, newChildren) {
+        try {
+            element.replaceChildren(...newChildren);
+        } catch (error) {
+            while (element.lastChild) element.removeChild(element.lastChild);
+            for (let i = 0; i < newChildren.length; i++) {
+                element.appendChild(newChildren[i]);
+            }
+        }
+    };
     const editWindow = document.getElementById("edit-window");
     const background = document.getElementById("background");
     const fakeCaret = document.getElementById("fake-caret");
@@ -16,12 +26,11 @@ window.addEventListener("load", function() {
         caretPosition.start = editWindow.selectionStart;
         caretPosition.end = editWindow.selectionEnd;
         console.debug("caretPosition: ", caretPosition);
-        background.replaceChildren(
+        replaceChildren(background, [
             document.createTextNode(editText.substring(0, caretPosition.end)),
             fakeCaret,
             document.createTextNode(editText.substring(caretPosition.end))
-        )
-        fakeCaret.style.display = "inline";
+        ])
     });
 }, false);
 console.log("stopgap.js loaded");
