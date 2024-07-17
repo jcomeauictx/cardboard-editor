@@ -37,7 +37,7 @@ body {
 @keyframes blink {
 	50% {border-right-color: red;}
 }
-span#fake-caret {
+#fake-caret {
 	border-right: 1px solid transparent;
 	animation: blink 1s step-end infinite alternate;
 }

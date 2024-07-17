@@ -29,7 +29,7 @@ window.addEventListener("load", function() {
         caretPosition.start = editWindow.selectionStart;
         caretPosition.end = editWindow.selectionEnd;
         console.debug("caretPosition: ", caretPosition);
-        replaceChildren(background, [
+        replaceChildren(background.firstChild, [
             document.createTextNode(editText.substring(0, caretPosition.end)),
             fakeCaret,
             document.createTextNode(editText.substring(caretPosition.end))
@@ -42,8 +42,9 @@ window.addEventListener("load", function() {
         } catch (error) {
             console.debug("fakeCaret could not be removed: " + error);
         }
-        editWindow.value = background.innerText;
-        replaceChildren(background, []);
+        editWindow.value = background.innerText.replace(
+            /&lt;/g, "<").replace(/&amp;/g, "&");
+        replaceChildren(background.firstChild, []);
         editWindow.selectionStart = caretPosition.start;
         editWindow.selectionEnd = caretPosition.end;
         editWindow.placeholder = placeholder;
