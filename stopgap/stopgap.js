@@ -16,7 +16,8 @@ window.addEventListener("load", function() {
     const background = document.getElementById("background");
     const fakeCaret = document.getElementById("fake-caret");
     fakeCaret.parentNode.removeChild(fakeCaret);  // remove from DOM
-    let styles = ["padding", "borderWidth", "borderStyle", "margin"];
+    let styles = ["padding", "borderWidth", "borderStyle",
+                  "margin", "lineHeight"];
     styles.forEach(function(style) {
         background.style[style] = getComputedStyle(editWindow)[style];
     });
