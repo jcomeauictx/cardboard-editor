@@ -15,6 +15,7 @@ window.addEventListener("load", function() {
     const placeholder = editWindow.placeholder;
     const background = document.getElementById("background");
     const fakeCaret = document.getElementById("fake-caret");
+    const keyboard = document.getElementById("keyboard");
     fakeCaret.parentNode.removeChild(fakeCaret);  // remove from DOM
     let styles = ["padding", "borderWidth", "borderStyle",
                   "margin", "lineHeight"];
@@ -50,6 +51,10 @@ window.addEventListener("load", function() {
         editWindow.selectionEnd = caretPosition.end;
         editWindow.placeholder = placeholder;
     });
+    const escKey = document.createElement("button");
+    escKey.style.gridColumn = escKey.style.gridRow = "1";
+    escKey.appendChild(document.createTextNode("Esc"));
+    keyboard.appendChild(escKey);
 }, false);
 console.log("stopgap.js loaded");
 // vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4

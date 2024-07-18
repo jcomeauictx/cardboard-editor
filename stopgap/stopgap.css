@@ -29,9 +29,13 @@ body {
 	/* other border attributes will be copied from editor window */
 	z-index: -1;  /* behind the editor textarea */
 }
-.keyboard {
+#keyboard {
 	padding: 0.5em 0em 0.5em 0em;
 	height: 50%;
+	display: grid;
+	grid-template-columns: repeat(6, 1fr);
+	grid-template-rows: repeat(6, 1fr);
+	gap: 5px;
 }
 /* http://www.multipetros.gr/posts/728-blink-elements-border-the-css-way/ */
 @keyframes blink {
