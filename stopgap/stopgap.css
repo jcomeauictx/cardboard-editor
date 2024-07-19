@@ -28,6 +28,8 @@ body {
 	border-color: transparent;
 	/* other border attributes will be copied from editor window */
 	z-index: -1;  /* behind the editor textarea */
+}
+pre {
 	white-space: pre-wrap;
 	overflow-wrap: break-word;
 }
