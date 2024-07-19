@@ -28,6 +28,8 @@ body {
 	border-color: transparent;
 	/* other border attributes will be copied from editor window */
 	z-index: -1;  /* behind the editor textarea */
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
 }
 #keyboard {
 	padding: 0.5em 0em 0.5em 0em;
