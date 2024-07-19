@@ -26,6 +26,7 @@ window.addEventListener("load", function() {
         start: editWindow.selectionStart,
         end: editWindow.selectionEnd
     };
+    let hasFocus = editWindow;
     editWindow.addEventListener("focusout", function() {
         let editText = editWindow.value;
         caretPosition.start = editWindow.selectionStart;
@@ -37,8 +38,10 @@ window.addEventListener("load", function() {
             document.createTextNode(editText.substring(caretPosition.end))
         ])
         editWindow.value = editWindow.placeholder = "";
+        hasFocus = background;
     });
     editWindow.addEventListener("focusin", function() {
+        hasFocus = editWindow;
         try {
             fakeCaret.parentNode.removeChild(fakeCaret);
         } catch (error) {
@@ -50,6 +53,21 @@ window.addEventListener("load", function() {
         editWindow.selectionStart = caretPosition.start;
         editWindow.selectionEnd = caretPosition.end;
         editWindow.placeholder = placeholder;
+    });
+    document.body.addEventListener("keydown", function(event) {
+        if (hasFocus == background) {
+            console.debug("key pressed: ", event.key);
+        }
+    });
+    document.body.addEventListener("keyup", function(event) {
+        if (hasFocus == background) {
+            console.debug("key released: ", event.key);
+        }
+    });
+    document.body.addEventListener("keypress", function(event) {
+        if (hasFocus == background) {
+            console.log("keypress event for ", event.key, " received");
+        }
     });
     const escKey = document.createElement("button");
     escKey.style.gridColumn = escKey.style.gridRow = "1";
