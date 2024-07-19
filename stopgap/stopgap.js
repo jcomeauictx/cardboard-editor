@@ -54,9 +54,23 @@ window.addEventListener("load", function() {
         editWindow.selectionEnd = caretPosition.end;
         editWindow.placeholder = placeholder;
     });
+    const deleteSelected = function() {
+        console.debug("deleting selected text in background window");
+    };
+    const insertString = function(string) {
+        console.debug("inserting '" + string + "' at caret position");
+    };
     document.body.addEventListener("keydown", function(event) {
         if (hasFocus == background) {
-            console.debug("key pressed: ", event.key);
+            console.debug("key pressed:", event.key);
+            if (event.altKey || event.ctrlKey || event.metaKey) {
+                console.debug(
+                    "ignoring keydown with alt, ctrl, or meta modifiers"
+                );
+            } else if (event.key.length == 1) {
+                deleteSelected();
+                insertString(event.key);
+            }
         }
     });
     document.body.addEventListener("keyup", function(event) {
