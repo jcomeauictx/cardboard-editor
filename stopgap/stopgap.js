@@ -55,16 +55,33 @@ window.addEventListener("load", function() {
         editWindow.placeholder = placeholder;
     });
     const deleteSelected = function() {
-        console.debug("deleting selected text in background window");
-        let count = Math.abs(caretPosition.start - caretPosition.end);
+        // assuming end is always greater than start, is this valid?!
+        let count = caretPosition.end - caretPosition.start;
         if (count > 0) {
-            console.debug("removing", count, "characters");
-        } else {
-            console.debug("no selected text to remove");
+            console.debug("removing", count, "characters of selected text");
+            fakeCaret.parentNode.removeChild(fakeCaret);  // remove temporarily
+            let text = background.firstChild.textContent;
+            replaceChildren(background.firstChild, [
+                text.substring(0, caretPosition.start),
+                fakeCaret,
+                text.substring(caretPosition.end)
+            ]);
+            caretPosition.end = caretPosition.start;
         }
     };
     const insertString = function(string) {
         console.debug("inserting '" + string + "' at caret position");
+        fakeCaret.parentNode.removeChild(fakeCaret);  // remove temporarily
+        let text = background.firstChild.textContent;
+        let newStart = caretPosition.start + string.length;
+        text = text.substring(0, caretPosition.start) + string +
+            text.substring(caretPosition.start)
+        caretPosition.start = caretPosition.end = newStart;
+        replaceChildren(background.firstChild, [
+            text.substring(0, newStart),
+            fakeCaret,
+            text.substring(newStart)
+        ]);
     };
     document.body.addEventListener("keydown", function(event) {
         if (hasFocus != editWindow) {
