@@ -67,7 +67,7 @@ window.addEventListener("load", function() {
         console.debug("inserting '" + string + "' at caret position");
     };
     document.body.addEventListener("keydown", function(event) {
-        if (hasFocus == background) {
+        if (hasFocus != editWindow) {
             console.debug("key pressed:", event.key);
             if (event.altKey || event.ctrlKey || event.metaKey) {
                 console.debug(
@@ -80,15 +80,15 @@ window.addEventListener("load", function() {
         }
     });
     document.body.addEventListener("keyup", function(event) {
-        if (hasFocus == background) {
+        if (hasFocus != editWindow) {
             console.debug("key released:", event.key);
         }
     });
     document.body.addEventListener("keypress", function(event) {
-        if (hasFocus == background) {
+        if (hasFocus != editWindow) {
             console.debug("keypress event for", event.key, "received");
         } else {
-            console.debug("ignoring keypress while background out of focus");
+            console.debug("ignoring keypress while edit window has focus");
         }
     });
     const sendKey = function(key) {
