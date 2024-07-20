@@ -56,6 +56,12 @@ window.addEventListener("load", function() {
     });
     const deleteSelected = function() {
         console.debug("deleting selected text in background window");
+        let count = Math.abs(caretPosition.start - caretPosition.end);
+        if (count > 0) {
+            console.debug("removing", count, "characters");
+        } else {
+            console.debug("no selected text to remove");
+        }
     };
     const insertString = function(string) {
         console.debug("inserting '" + string + "' at caret position");
@@ -75,18 +81,38 @@ window.addEventListener("load", function() {
     });
     document.body.addEventListener("keyup", function(event) {
         if (hasFocus == background) {
-            console.debug("key released: ", event.key);
+            console.debug("key released:", event.key);
         }
     });
     document.body.addEventListener("keypress", function(event) {
         if (hasFocus == background) {
-            console.log("keypress event for ", event.key, " received");
+            console.debug("keypress event for", event.key, "received");
+        } else {
+            console.debug("ignoring keypress while background out of focus");
         }
     });
+    const sendKey = function(key) {
+        const event = new KeyboardEvent("keydown", {key: key});
+        console.log("sending key '" + key + "'");
+        document.body.dispatchEvent(event);
+    };
+    const softKey = function(event) {
+        const key = event.target.firstChild.textContent;
+        console.debug("key", key, "pressed");
+        sendKey(key);
+    };
     const escKey = document.createElement("button");
     escKey.style.gridColumn = escKey.style.gridRow = "1";
     escKey.appendChild(document.createTextNode("Esc"));
     keyboard.appendChild(escKey);
+    const leftSquareBracket = document.createElement("button");
+    leftSquareBracket.style.gridColumn = "3";
+    leftSquareBracket.style.gridRow = "6";
+    leftSquareBracket.appendChild(document.createTextNode("["));
+    keyboard.appendChild(leftSquareBracket);
+    leftSquareBracket.addEventListener("click", function(event) {
+        softKey(event);
+    });
 }, false);
 console.log("stopgap.js loaded");
 // vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
