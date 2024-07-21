@@ -2,7 +2,7 @@
 '''
 server for stopgap implementation
 '''
-import sys, logging, time
+import sys, logging, time, socket  # pylint: disable=multiple-imports
 import posixpath as httppath
 from http.server import CGIHTTPRequestHandler as cgi_handler, test as serve
 from threading import Thread
@@ -40,6 +40,22 @@ def dispatch(path):
     else:
         print('content-type: text/html\r\n\r\n', end='')
         print('okey-dokey')
+
+def get_ip_address(remote='1.1.1.1', port=33434):
+    '''
+    returns external (NAT, if used) IP address of Internet-connected machine
+
+    https://stackoverflow.com/a/25850698/493161
+    '''
+    address = None
+    try:
+        probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        probe.connect((remote, port))  # UDP, doesn't actually send a packet
+        address = probe.getsockname()[0]
+    except (OSError, IndexError, RuntimeError) as problem:
+        logging.error('Cannot determine IP address: %s', problem)
+    finally:
+        return address
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG if __debug__ else logging.INFO)
