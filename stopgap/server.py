@@ -46,11 +46,16 @@ def get_ip_address(remote='1.1.1.1', port=33434):
     returns external (NAT, if used) IP address of Internet-connected machine
 
     https://stackoverflow.com/a/25850698/493161
+
+    uses innocuous traceroute port 33434 by default, even though UDP doesn't
+    actually send a packet on `connect`
+
+    1.1.1.1 is a public cloudflare DNS service
     '''
     address = None
     try:
         probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        probe.connect((remote, port))  # UDP, doesn't actually send a packet
+        probe.connect((remote, port))
         address = probe.getsockname()[0]
     except (OSError, IndexError, RuntimeError) as problem:
         logging.error('Cannot determine IP address: %s', problem)
