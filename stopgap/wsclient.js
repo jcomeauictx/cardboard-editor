@@ -1,6 +1,6 @@
 // adapted from https://en.wikipedia.org/wiki/WebSocket
 // Connect to server
-ws = new WebSocket("ws://127.0.0.1/scoreboard") // Local server
+ws = new WebSocket("ws://127.0.0.1:8080/") // Local server
 // ws = new WebSocket("wss://game.example.com/scoreboard") // Remote server
 
 ws.onopen = () => {
