@@ -4,18 +4,18 @@ websocket server
 
 adapted from https://en.wikipedia.org/wiki/WebSocket
 '''
-from socket import socket
+import socket
 from base64 import b64encode
 from hashlib import sha1
 
-MAGIC = b"258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+MAGIC = b'258EAFA5-E914-47DA-95CA-C5AB0DC85B11'  # from WebSocket RFC6455
 
-# Create socket and listen at port 80
-ws = socket()
-ws.bind(("", 80))
+# Create socket and listen
+ws = socket.socket()
+ws.bind(('', socket.getservbyname('http-alt')))
 ws.listen()
 conn, addr = ws.accept()
-
+nonce = b''
 # Parse request
 for line in conn.recv(4096).split(b"\r\n"):
     if line.startswith(b"Sec-WebSocket-Key"):

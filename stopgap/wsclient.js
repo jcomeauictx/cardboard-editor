@@ -1,4 +1,3 @@
-<script>
 // adapted from https://en.wikipedia.org/wiki/WebSocket
 // Connect to server
 ws = new WebSocket("ws://127.0.0.1/scoreboard") // Local server
@@ -21,4 +20,3 @@ ws.onclose = (event) => {
 ws.onerror = () => {
     console.log("Connection closed due to error")
 }
-</script>
