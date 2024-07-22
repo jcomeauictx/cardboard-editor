@@ -4,9 +4,29 @@ server for stopgap implementation
 '''
 import sys, logging, time, socket  # pylint: disable=multiple-imports
 import posixpath as httppath
-from http.server import CGIHTTPRequestHandler as cgi_handler, test as serve
+from http.server import SimpleHTTPRequestHandler, CGIHTTPRequestHandler, \
+    test as serve
 from threading import Thread
 from select import select
+
+class CGIHandler(CGIHTTPRequestHandler):
+    '''
+    subclass to take care of some things differently from system library
+    '''
+    def send_head(self):
+        command = self.path.lstrip('/')
+        if command in dir(self) and callable(getattr(self, command)):
+            getattr(self, command)()
+        elif self.is_cgi():
+            return self.run_cgi()
+        elif self.path == '/favicon.ico':
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-type", 'image/vnd')
+            self.send_header("Content-Length", '0')
+            self.end_headers()
+            return BytesIO(b'')
+        else:
+            return SimpleHTTPRequestHandler.send_head(self)
 
 def background():
     '''
@@ -34,7 +54,7 @@ def dispatch(path):
         keepalive = Thread(target=background, daemon=True)
         keepalive.start()
         try:
-            serve(HandlerClass=cgi_handler)
+            serve(HandlerClass=CGIHandler)
         finally:  # KeyboardInterrupt already trapped and sys.exit() called
             logging.debug('waiting for keepalive thread to exit')
     else:
