@@ -11,6 +11,8 @@ logging.basicConfig(level=logging.DEBUG if __debug__ else logging.INFO)
 
 MAGIC = b'258EAFA5-E914-47DA-95CA-C5AB0DC85B11'  # from WebSocket RFC6455
 
+# pylint: disable=consider-using-f-string
+
 def serve(port='http-alt'):
     '''
     Create socket and listen
@@ -40,20 +42,31 @@ def serve(port='http-alt'):
     conn.send(response)
 
     while True: # decode messages from the client
-        header = conn.recv(2)
-        fin = bool(header[0] & 0x80) # bit 0
-        assert fin == 1, "We only support unfragmented messages"
-        opcode = header[0] & 0xf # bits 4-7
-        assert opcode in (1, 2), "We only support data messages"
-        masked = bool(header[1] & 0x80) # bit 8
-        assert masked, "The client must mask all frames"
-        payload_size = header[1] & 0x7f # bits 9-15
-        assert payload_size <= 125, "We only support small messages"
-        masking_key = conn.recv(4)
-        payload = bytearray(conn.recv(payload_size))
-        for i in range(payload_size):
-            payload[i] = payload[i] ^ masking_key[i % 4]
-        logging.info('payload: %s', payload)
+        try:
+            header = conn.recv(2)
+            if len(header) == 2:
+                fin = bool(header[0] & 0x80) # bit 0
+                assert fin == 1, "We only support unfragmented messages"
+                opcode = header[0] & 0xf # bits 4-7
+                assert opcode in (1, 2), "We only support data messages"
+                masked = bool(header[1] & 0x80) # bit 8
+                assert masked, "The client must mask all frames"
+                payload_size = header[1] & 0x7f # bits 9-15
+                assert payload_size <= 125, "We only support small messages"
+                masking_key = conn.recv(4)
+                payload = bytearray(conn.recv(payload_size))
+                for i in range(payload_size):
+                    payload[i] = payload[i] ^ masking_key[i % 4]
+                logging.info('payload: %s', payload)
+            elif not header:
+                raise StopIteration('remote end closed')
+            else:
+                raise ValueError('insufficient header length: %d' % len(header))
+        except (AssertionError, ValueError) as error:
+            logging.error('error in processing message: %s', error)
+        except StopIteration:
+            logging.info('remote end closed')
+            sys.exit(0)
 
 if __name__ == '__main__':
     serve()
