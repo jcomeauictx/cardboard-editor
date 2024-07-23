@@ -2,7 +2,7 @@
 window.onload = function() {
     // Connect to local server (wsserver.py)
     const websocket = new WebSocket("ws://127.0.0.1:8080/");
-    let opened = false;
+    let opened = false, openwait = null;
     websocket.addEventListener("open", function(event) {
         console.debug("Connection opened");
         opened = true;
@@ -24,10 +24,17 @@ window.onload = function() {
     });
 
     console.debug("wsclient.js ready");
-    window.setTimeout(function() {
+
+    // check every second to ensure "open" event is handled
+    openwait = window.setInterval(function() {
         if (!opened && websocket.readyState == WebSocket.OPEN) {
-            // "open" event didn't fire, so take care of it now
+            console.debug("'open' event didn't fire, taking care of it now");
             websocket.dispatchEvent(new Event("open"));
+            clearInterval(openwait);
+        } else {
+            console.debug("opened: " + opened + ", websocket.readyState: " +
+                          websocket.readyState);
+            if (opened) clearInterval(openwait);
         }
     }, 1000);
 };
