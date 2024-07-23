@@ -5,7 +5,7 @@ server for stopgap implementation
 import sys, logging, time, socket  # pylint: disable=multiple-imports
 import posixpath as httppath
 from http.server import SimpleHTTPRequestHandler, CGIHTTPRequestHandler, \
-    test as serve
+    HTTPStatus, test as serve
 from threading import Thread
 from select import select
 
