@@ -7,6 +7,7 @@ window.addEventListener("load", function() {
             console.debug("using older, slower method to replace child nodes");
             while (element.lastChild) element.removeChild(element.lastChild);
             for (let i = 0; i < newChildren.length; i++) {
+                console.debug("appending", newChildren[i], "to", element);
                 element.appendChild(newChildren[i]);
             }
         }
