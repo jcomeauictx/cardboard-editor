@@ -2,11 +2,12 @@
 '''
 server for stopgap implementation
 '''
-import sys, logging, time, socket  # pylint: disable=multiple-imports
+import sys, logging, socket  # pylint: disable=multiple-imports
 import posixpath as httppath
 from http.server import SimpleHTTPRequestHandler, CGIHTTPRequestHandler, \
     HTTPStatus, test as serve
 from threading import Thread
+from io import BytesIO
 from select import select
 
 class CGIHandler(CGIHTTPRequestHandler):
@@ -16,24 +17,23 @@ class CGIHandler(CGIHTTPRequestHandler):
     def send_head(self):
         command = self.path.lstrip('/')
         if command in dir(self) and callable(getattr(self, command)):
-            getattr(self, command)()
-        elif self.is_cgi():
+            return getattr(self, command)()
+        if self.is_cgi():
             return self.run_cgi()
-        elif self.path == '/favicon.ico':
+        if self.path == '/favicon.ico':
             self.send_response(HTTPStatus.OK)
             self.send_header("Content-type", 'image/vnd')
             self.send_header("Content-Length", '0')
             self.end_headers()
             return BytesIO(b'')
-        else:
-            return SimpleHTTPRequestHandler.send_head(self)
+        return SimpleHTTPRequestHandler.send_head(self)
 
 def background():
     '''
     run in separate thread to keep server active while browser in foreground
     '''
     try:
-        with open('/dev/location') as infile:
+        with open('/dev/location', encoding='utf-8') as infile:
             logging.debug('keepalive thread launched in background')
             while select([infile], [], [infile]):
                 location = infile.read()
@@ -79,8 +79,7 @@ def get_ip_address(remote='1.1.1.1', port=33434):
         address = probe.getsockname()[0]
     except (OSError, IndexError, RuntimeError) as problem:
         logging.error('Cannot determine IP address: %s', problem)
-    finally:
-        return address
+    return address
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG if __debug__ else logging.INFO)
