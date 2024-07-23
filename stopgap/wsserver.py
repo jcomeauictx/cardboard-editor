@@ -4,7 +4,7 @@ websocket server
 
 adapted from https://en.wikipedia.org/wiki/WebSocket
 '''
-import socket, logging  # pylint: disable=multiple-imports
+import sys, socket, logging  # pylint: disable=multiple-imports
 from base64 import b64encode
 from hashlib import sha1
 logging.basicConfig(level=logging.DEBUG if __debug__ else logging.INFO)
@@ -64,7 +64,7 @@ def serve(port='http-alt'):
                 raise ValueError('insufficient header length: %d' % len(header))
         except (AssertionError, ValueError) as error:
             logging.error('error in processing message: %s', error)
-        except StopIteration:
+        except (StopIteration, ConnectionResetError):
             logging.info('remote end closed')
             sys.exit(0)
 
