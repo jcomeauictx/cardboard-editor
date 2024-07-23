@@ -1,23 +1,23 @@
 // adapted from https://en.wikipedia.org/wiki/WebSocket
 // Connect to server
-ws = new WebSocket("wss://127.0.0.1:8080/"); // Local server
+websocket = new WebSocket("ws://127.0.0.1:8080/"); // Local server
 
-ws.onopen = () => {
-    console.log("Connection opened");
-    ws.send("gnixl");
-};
+websocket.addEventListener("open", function(event) {
+    console.debug("Connection opened");
+    websocket.send("gnixl");
+});
 
-ws.onmessage = (event) => {
-    console.log("Data received", event.data);
-    ws.close();
-};
+websocket.addEventListener("message", function(event) {
+    console.info("Data received: " + event.data);
+    websocket.close();
+});
 
-ws.onclose = (event) => {
-    console.log("Connection closed", event.code, event.reason, event.wasClean);
-};
+websocket.addEventListener("close", function(event) {
+    console.debug("Connection closed: " + event);
+});
 
-ws.onerror = () => {
-    console.log("Connection closed due to error");
-};
+websocket.addEventListener("error", function(event) {
+    console.debug("Connection closed due to error: " + event);
+});
 
-console.log("wsclient.js ready");
+console.debug("wsclient.js ready");
