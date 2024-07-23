@@ -7,7 +7,7 @@ window.addEventListener("load", function() {
             console.debug("using older, slower method to replace child nodes");
             while (element.lastChild) element.removeChild(element.lastChild);
             for (let i = 0; i < newChildren.length; i++) {
-                console.debug("appending", newChildren[i], "to", element);
+                console.debug("appending " + newChildren[i] + " to " + element);
                 element.appendChild(newChildren[i]);
             }
         }
@@ -63,9 +63,9 @@ window.addEventListener("load", function() {
             fakeCaret.parentNode.removeChild(fakeCaret);  // remove temporarily
             let text = background.firstChild.textContent;
             replaceChildren(background.firstChild, [
-                text.substring(0, caretPosition.start),
+                document.createTextNode(text.substring(0, caretPosition.start)),
                 fakeCaret,
-                text.substring(caretPosition.end)
+                document.createTextNode(text.substring(caretPosition.end))
             ]);
             caretPosition.end = caretPosition.start;
         }
@@ -79,9 +79,9 @@ window.addEventListener("load", function() {
             text.substring(caretPosition.start)
         caretPosition.start = caretPosition.end = newStart;
         replaceChildren(background.firstChild, [
-            text.substring(0, newStart),
+            document.createTextNode(text.substring(0, newStart)),
             fakeCaret,
-            text.substring(newStart)
+            document.createTextNode(text.substring(newStart))
         ]);
     };
     document.body.addEventListener("keydown", function(event) {
