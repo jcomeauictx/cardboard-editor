@@ -16,9 +16,6 @@ window.onload = function() {
         console.debug("Connection opened");
         opened = true;
         websocket.send("gnixl");
-        // now let's see what happens when we try to use http
-        xhr.open("POST", "http://127.0.0.1:8080/");
-        xhr.send("test=gnixl");
     });
 
     websocket.addEventListener("message", function(event) {
@@ -36,5 +33,9 @@ window.onload = function() {
     });
 
     console.debug("wsclient.js ready");
+    // now let's see what happens when we try to use http
+    xhr.open("POST", "http://127.0.0.1:8080/");
+    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    xhr.send("test=gnixl");
 };
 // vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
