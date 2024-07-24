@@ -38,7 +38,7 @@ def serve(port='http-alt'):
         b'Sec-WebSocket-Accept: %s\r\n'
     ) % b64encode(sha1(nonce + MAGIC).digest())
 
-    logging.debug('sending response: %s', ''.join(response.decode()).split())
+    logging.debug('sending response: %s', response)
     conn.send(response)
 
     while True: # decode messages from the client
