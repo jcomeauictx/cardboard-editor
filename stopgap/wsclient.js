@@ -2,11 +2,23 @@
 window.onload = function() {
     // Connect to local server (wsserver.py)
     const websocket = new WebSocket("ws://127.0.0.1:8080/");
+    const xhr = new XMLHttpRequest();
+    xhr.addEventListener("readystatechange", function() {
+        if(this.readyState == XMLHttpRequest.DONE && this.status == 200) {
+            console.log("xhr response: " + this.responseText);
+        } else {
+            console.debug("readyState: " + this.readyState +
+                          ", status: " + this.status);
+        }
+    });
     let opened = false, openwait = null;
     websocket.addEventListener("open", function(event) {
         console.debug("Connection opened");
         opened = true;
         websocket.send("gnixl");
+        // now let's see what happens when we try to use http
+        xhr.open("POST", "http://127.0.0.1:8080/");
+        xhr.send("test=gnixl");
     });
 
     websocket.addEventListener("message", function(event) {
@@ -24,18 +36,5 @@ window.onload = function() {
     });
 
     console.debug("wsclient.js ready");
-
-    // check every second to ensure "open" event is handled
-    openwait = window.setInterval(function() {
-        if (!opened && websocket.readyState == WebSocket.OPEN) {
-            console.debug("'open' event didn't fire, taking care of it now");
-            websocket.dispatchEvent(new Event("open"));
-            clearInterval(openwait);
-        } else {
-            console.debug("opened: " + opened + ", websocket.readyState: " +
-                          websocket.readyState);
-            if (opened) clearInterval(openwait);
-        }
-    }, 1000);
 };
 // vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
