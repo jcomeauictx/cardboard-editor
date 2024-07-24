@@ -1,4 +1,4 @@
-#!/usr/bin/python3 -OO
+#!/usr/bin/python3
 '''
 websocket server
 
@@ -17,16 +17,17 @@ def serve(port='http-alt'):
     '''
     Create socket and listen
     '''
+    # pylint: disable=too-many-locals
     ws = socket.socket()
     ws.bind(('127.0.0.1', socket.getservbyname(port)))
     logging.debug('listening on %s', ws)
     ws.listen()
-    conn, _ = ws.accept()
+    conn = ws.accept()[0]
     nonce = b''
     # Parse request
-    for line in conn.recv(4096).split(b"\r\n"):
+    for line in conn.recv(4096).split(b'\r\n'):
         logging.debug('received line: %s', line)
-        if line.startswith(b"Sec-WebSocket-Key"):
+        if line.startswith(b'Sec-WebSocket-Key'):
             nonce = line.split(b":")[1].strip()
             logging.debug('found nonce: %s', nonce)
 
@@ -47,13 +48,13 @@ def serve(port='http-alt'):
             header = conn.recv(2)
             if len(header) == 2:
                 fin = bool(header[0] & 0x80) # bit 0
-                assert fin == 1, "We only support unfragmented messages"
+                assert fin == 1, 'We only support unfragmented messages'
                 opcode = header[0] & 0xf # bits 4-7
-                assert opcode in (1, 2), "We only support data messages"
+                assert opcode in (1, 2), 'We only support data messages'
                 masked = bool(header[1] & 0x80) # bit 8
-                assert masked, "The client must mask all frames"
+                assert masked, 'The client must mask all frames'
                 payload_size = header[1] & 0x7f # bits 9-15
-                assert payload_size <= 125, "We only support small messages"
+                assert payload_size <= 125, 'We only support small messages'
                 masking_key = conn.recv(4)
                 payload = bytearray(conn.recv(payload_size))
                 for i in range(payload_size):
