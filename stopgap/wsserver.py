@@ -19,7 +19,10 @@ def serve(port='http-alt'):
     '''
     # pylint: disable=too-many-locals
     ws = socket.socket()
-    ws.bind(('127.0.0.1', socket.getservbyname(port)))
+    try:
+        ws.bind(('', port))
+    except TypeError:
+        ws.bind(('', socket.getservbyname(port)))
     logging.debug('listening on %s', ws)
     ws.listen()
     conn = ws.accept()[0]
