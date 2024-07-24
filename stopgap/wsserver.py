@@ -18,7 +18,7 @@ def serve(port='http-alt'):
     Create socket and listen
     '''
     ws = socket.socket()
-    ws.bind(('', socket.getservbyname(port)))
+    ws.bind(('127.0.0.1', socket.getservbyname(port)))
     logging.debug('listening on %s', ws)
     ws.listen()
     conn, _ = ws.accept()
@@ -36,10 +36,11 @@ def serve(port='http-alt'):
         b'Upgrade: websocket\r\n'
         b'Connection: Upgrade\r\n'
         b'Sec-WebSocket-Accept: %s\r\n'
+        b'\r\n'
     ) % b64encode(sha1(nonce + MAGIC).digest())
 
-    logging.debug('sending response: %s', response)
-    conn.send(response)
+    sent = conn.send(response)
+    logging.debug('sent response: %s, %d bytes', response, sent)
 
     while True: # decode messages from the client
         try:
