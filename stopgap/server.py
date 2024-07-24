@@ -2,13 +2,16 @@
 '''
 server for stopgap implementation
 '''
-import sys, logging, socket  # pylint: disable=multiple-imports
+import sys, os, logging, socket  # pylint: disable=multiple-imports
 import posixpath as httppath
 from http.server import SimpleHTTPRequestHandler, CGIHTTPRequestHandler, \
     HTTPStatus, test as serve
 from threading import Thread
 from io import BytesIO
 from select import select
+
+ADDRESS = os.getenv('LOCAL') or '127.0.0.1'
+PORT = os.getenv('PORT') or 8000
 
 class CGIHandler(CGIHTTPRequestHandler):
     '''
@@ -54,7 +57,7 @@ def dispatch(path):
         keepalive = Thread(target=background, daemon=True)
         keepalive.start()
         try:
-            serve(HandlerClass=CGIHandler)
+            serve(HandlerClass=CGIHandler, bind=ADDRESS, port=PORT)
         finally:  # KeyboardInterrupt already trapped and sys.exit() called
             logging.debug('waiting for keepalive thread to exit')
     else:

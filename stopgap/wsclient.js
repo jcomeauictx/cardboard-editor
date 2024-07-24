@@ -2,30 +2,20 @@
 window.onload = function() {
     // Connect to local server (wsserver.py)
     const websocket = new WebSocket("ws://127.0.0.1:8080/");
-    const xhr = new XMLHttpRequest();
-    xhr.addEventListener("readystatechange", function() {
-        if(this.readyState == XMLHttpRequest.DONE && this.status == 200) {
-            console.log("xhr response: " + this.responseText);
-        } else {
-            console.debug("readyState: " + this.readyState +
-                          ", status: " + this.status);
-        }
-    });
-    let opened = false, openwait = null;
+    const responses = ["bar", "baz", "foo"];  // offset +1 from wsserver.py
+    const messageCount = 0;
     websocket.addEventListener("open", function(event) {
         console.debug("Connection opened");
-        opened = true;
-        websocket.send("gnixl");
     });
 
     websocket.addEventListener("message", function(event) {
         console.info("Data received: " + event.data);
-        //websocket.close();
+        messageCount += 1;
+        websocket.send(responses[messageCount % responses.length]);
     });
 
     websocket.addEventListener("close", function(event) {
-        console.debug("Connection closed, code: " + event.code +
-        ", reason: " + event.reason + ", clean: " + event.wasClean);
+        console.debug("Connection closed, code: " + event.code);
     });
 
     websocket.addEventListener("error", function(event) {
@@ -33,9 +23,5 @@ window.onload = function() {
     });
 
     console.debug("wsclient.js ready");
-    // now let's see what happens when we try to use http
-    xhr.open("POST", "http://127.0.0.1:8080/");
-    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-    xhr.send("test=gnixl");
 };
 // vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
