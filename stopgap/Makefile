@@ -29,6 +29,7 @@ tkinter.debug:
 	@echo .gdbinit will run xtest.py >&2
 	@echo '`bt` for backtrace after segfault' >&2
 	gdb python3
+stop: $(WSSERVER_PORT).stop $(HTTPSERVER_PORT).stop
 %.stop:
 	pid=$$(lsof -t -itcp@$(LOCAL):$* -s tcp:listen); \
         if [ "$$pid" ]; then \
@@ -45,8 +46,8 @@ xtest.log: xtest.py
 serve: $(HTTPSERVER)
 	./$< &
 	-$(BROWSE) "$(URL)" >&2
-	# firefox always goes to background, so let's prevent server stopping
-	if [ "$(BROWSER)" = "firefox" ]; then read -p '<ENTER> when done: '; fi
+	# prevent server stopping in case browser goes to background
+	read -p '<ENTER> when done: '
 	$(MAKE) $(HTTPSERVER_PORT).stop
 wsserve: $(WSSERVER)
 	./$< &
@@ -58,4 +59,4 @@ else
 endif
 wstest:
 	$(MAKE) wsserve
-	$(MAKE) BROWSER=firefox SERVER=WSSERVER serve
+	$(MAKE) SERVER=WSSERVER serve
