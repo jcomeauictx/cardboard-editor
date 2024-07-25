@@ -13,11 +13,15 @@ window.onload = function() {
     const websocket = new WebSocket(url);
     const responses = ["foo", "bar", "baz"];
     const display = document.getElementById("log-window");
-    display.scrollTop = display.scrollHeight;
+    console.debug("scroll height: " + display.scrollHeight +
+                  ", scroll top: " + display.scrollTop);
     let messageCount = 0;
     const log = function(message, end=true) {
         display.value += message;
-        if (end) display.value += "\r\n";
+        if (end) {
+            display.value += "\r\n";
+            display.scrollTop = display.scrollHeight;  // auto scroll
+        }
     };
     websocket.addEventListener("open", function(event) {
         log("Connection opened to " + url);
