@@ -127,6 +127,11 @@ def serve(address=ADDRESS, port=PORT):
         # simulate having to wait for data.
         if not packet and opcode != 'close':
             time.sleep(1)
+        elif opcode == 'close':
+            code, reason = int.from_bytes(payload[:2]), payload[2:]
+            logging.warning('client closed connection: %d, %s', code, reason)
+            conn.send(package(code.to_bytes(length=2) + b'client initiated'))
+            sys.exit(0)
 
 def package(payload):
     '''
