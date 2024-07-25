@@ -13,14 +13,19 @@ window.onload = function() {
     const websocket = new WebSocket(url);
     const responses = ["foo", "bar", "baz"];
     const display = document.getElementById("log-window");
-    console.debug("scroll height: " + display.scrollHeight +
-                  ", scroll top: " + display.scrollTop);
     let messageCount = 0;
     const log = function(message, end=true) {
         display.value += message;
         if (end) {
             display.value += "\r\n";
+            console.debug("scroll height: " + display.scrollHeight +
+                          ", scroll top: " + display.scrollTop);
+            /* auto scroll on reaching bottom of window,
+               then close the session. comment out the `close` line if
+               you wish the session to go on indefinintely.
+            */
             display.scrollTop = display.scrollHeight;  // auto scroll
+            if (display.scrollTop != 0) websocket.close()
         }
     };
     websocket.addEventListener("open", function(event) {
