@@ -12,10 +12,11 @@ logging.basicConfig(level=logging.DEBUG if __debug__ else logging.INFO)
 ADDRESS = os.getenv('LOCAL') or '127.0.0.1'
 PORT = os.getenv('PORT') or 8080
 MAGIC = b'258EAFA5-E914-47DA-95CA-C5AB0DC85B11'  # from WebSocket RFC6455
-MESSAGES = [b'foo', b'bar', b'baz']
+MESSAGES = [b'foo', b'bar', b'baz']  # simulated message stream
 FIN = MASKED = 0b10000000
 PAYLOAD_SIZE = 0b01111111
 RSV1 = RSV2 = RSV3 = 0  # reserved bits
+CLOSE = 1000  # normal closure code per RFC 6455
 OPCODE = {
     0: 'continuation',
     1: 'text',
@@ -34,6 +35,7 @@ OPCODE = {
     14: 'reserved control',
     15: 'reserved control',
 }
+# allow reverse lookup, mapping (unique) opcode string to text
 OPCODE.update(dict(map(reversed, OPCODE.items())))
 SUPPORTED = ('text', 'binary', 'close')
 MAXPACKET = 4096  # quit on any packets this size or greater
@@ -76,22 +78,24 @@ def serve(address=ADDRESS, port=PORT):
     opcode = None
     packet = b''
     while True: # send messages and show responses from the client
-        conn.send(package(MESSAGES[counter % len(MESSAGES)]))
-        counter += 1
+        if opcode != 'stop':  # `opcode` still set from last iteration
+            conn.send(package(MESSAGES[counter % len(MESSAGES)]))
+            counter += 1
         try:
             packet = packet or conn.recv(MAXPACKET)
             if len(packet) >= 2:
                 if (packet[0] & FIN) != FIN:
                     logging.error('we only support unfragmented messages')
                     raise NotImplementedError('fragments not supported')
+                if len(packet) == MAXPACKET:
+                    logging.error('large packets not supported')
+                    raise StopIteration('packet too large, cannot re-sync')
                 opcode = OPCODE[packet[0] & 0xf]
                 logging.debug('opcode: %s', opcode)
                 if opcode not in SUPPORTED:
-                    logging.error('we only support data messages')
+                    logging.error('we only support opcodes %s', SUPPORTED)
                     logging.error('offending opcode: %d', opcode)
                     raise NotImplementedError('opcode not supported')
-                if opcode == 'close':
-                    logging.warning('remote sent close message')
                 masked = bool(packet[1] & MASKED)
                 if not masked:
                     logging.error('unmasked client data violates standard')
@@ -115,32 +119,38 @@ def serve(address=ADDRESS, port=PORT):
                     packet = payload[payload_size:].to_bytes()
                 else:
                     packet = b''
+                if payload == 'stop':
+                    conn.send(package(
+                        CLOSE.to_bytes(length=2) + b'client initiated', 'close')
+                    )
+                elif opcode == 'close':
+                    code, reason = int.from_bytes(payload[:2]), payload[2:]
+                    logging.warning('client closed connection: %d, %s',
+                                    code, reason)
+                    raise StopIteration('remote end initiated closure')
             elif not packet:
                 raise StopIteration('remote end closed unexpectedly')
             else:
                 raise ValueError('insufficient packet length: %d' % len(packet))
         except (NotImplementedError, ValueError, IndexError) as error:
             logging.error('error in processing message: %s', error)
-        except (StopIteration, ConnectionResetError) as ended:
+        except (StopIteration, ConnectionResetError, BrokenPipeError) as ended:
             logging.info('remote end closed: %s', ended)
+            conn.shutdown(socket.SHUT_WR)
+            conn.close()
             sys.exit(0)
-        # simulate having to wait for data.
-        if not packet and opcode != 'close':
+        # simulate having to wait for data, if packet not already queued
+        if not packet:
             time.sleep(1)
-        elif opcode == 'close':
-            code, reason = int.from_bytes(payload[:2]), payload[2:]
-            logging.warning('client closed connection: %d, %s', code, reason)
-            conn.send(package(code.to_bytes(length=2) + b'client initiated'))
-            sys.exit(0)
 
-def package(payload):
+def package(payload, opcode='text'):
     '''
     wrap payload in websocket packet
 
     assumes plain text and short message, doesn't do any checking
     '''
     length = len(payload)
-    return bytes((FIN | OPCODE['text'], length)) + payload
+    return bytes((FIN | OPCODE[opcode], length)) + payload
 
 if __name__ == '__main__':
     serve()

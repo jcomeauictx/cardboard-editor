@@ -13,7 +13,17 @@ window.onload = function() {
     const websocket = new WebSocket(url);
     const responses = ["foo", "bar", "baz"];
     const display = document.getElementById("log-window");
+    let closing = 0;
     let messageCount = 0;
+    const close = function(socket, code, reason) {
+        if (closing++ == 1) {
+            console.debug("requesting server to stop");
+            socket.send("stop");
+        } else {
+            console.debug("forcing closure, closing state = " + closing);
+            socket.close(code, reason);
+        }
+    };
     const log = function(message, end=true) {
         display.value += message;
         if (end) {
@@ -25,7 +35,11 @@ window.onload = function() {
                you wish the session to go on indefinintely.
             */
             display.scrollTop = display.scrollHeight;  // auto scroll
-            if (display.scrollTop != 0) websocket.close(1000, "window full");
+            /* https://www.rfc-editor.org/rfc/rfc6455.html
+               "The underlying TCP connection, in most normal cases,
+                SHOULD be closed by the server"...
+            */
+            if (display.scrollTop != 0) close(websocket, 1000, "window full");
         }
     };
     websocket.addEventListener("open", function(event) {
