@@ -102,8 +102,9 @@ def serve(address=ADDRESS, port=PORT):
                 logging.debug('masking key: %s', masking_key)
                 payload = bytearray(packet[6:])
                 if len(payload) != payload_size:
+                    logging.error('payload unexpected size: %s', payload)
                     raise ValueError('wrong payload size %d != %d' %
-                                     len(payload), payload_size)
+                                     (len(payload), payload_size))
                 for i in range(payload_size):
                     payload[i] = payload[i] ^ masking_key[i % 4]
                 logging.info('payload: %s', payload)
