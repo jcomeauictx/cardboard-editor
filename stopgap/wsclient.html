@@ -19,9 +19,11 @@ window.onload = function() {
         if (++closing == 1) {
             console.debug("requesting server to stop");
             socket.send("stop");
-        } else {
+        } else if (closing == 3) {
             console.debug("forcing closure, closing state = " + closing);
             socket.close(code, reason);
+        } else if (closing > 3) {
+            console.warn("already closed, awaiting server shutdown");
         }
     };
     const log = function(message, end=true) {

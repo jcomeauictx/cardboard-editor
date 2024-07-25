@@ -150,7 +150,9 @@ def package(payload, opcode='text'):
     assumes plain text and short message, doesn't do any checking
     '''
     length = len(payload)
-    return bytes((FIN | OPCODE[opcode], length)) + payload
+    packed = bytes((FIN | OPCODE[opcode], length)) + payload
+    logging.debug('package being sent: %s', packed)
+    return packed
 
 if __name__ == '__main__':
     serve()
