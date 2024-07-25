@@ -1,4 +1,4 @@
-#!/usr/bin/python3 -OO
+#!/usr/bin/python3
 '''
 websocket server
 
@@ -36,6 +36,7 @@ OPCODE = {
 }
 OPCODE.update(dict(map(reversed, OPCODE.items())))
 SUPPORTED = ('text', 'binary', 'close')
+MAXPACKET = 4096  # quit on any packets this size or greater
 
 # pylint: disable=consider-using-f-string
 
@@ -54,7 +55,7 @@ def serve(address=ADDRESS, port=PORT):
     conn = ws.accept()[0]
     nonce = b''
     # Parse request
-    for line in conn.recv(4096).split(b'\r\n'):
+    for line in conn.recv(MAXPACKET).split(b'\r\n'):
         logging.debug('received line: %s', line)
         if line.startswith(b'Sec-WebSocket-Key'):
             nonce = line.split(b":")[1].strip()
@@ -72,17 +73,18 @@ def serve(address=ADDRESS, port=PORT):
     sent = conn.send(response)
     logging.debug('sent response: %s, %d bytes', response, sent)
     counter = 0
-    while True: # decode messages from the client
+    packet = b''
+    while True: # send messages and show responses from the client
         conn.send(package(MESSAGES[counter % len(MESSAGES)]))
         counter += 1
-        time.sleep(1)
         try:
-            packet = conn.recv(4096)
+            packet = packet or conn.recv(MAXPACKET)
             if len(packet) >= 2:
                 if (packet[0] & FIN) != FIN:
                     logging.error('we only support unfragmented messages')
                     raise NotImplementedError('fragments not supported')
                 opcode = OPCODE[packet[0] & 0xf]
+                logging.debug('opcode: %s', opcode)
                 if opcode not in SUPPORTED:
                     logging.error('we only support data messages')
                     logging.error('offending opcode: %d', opcode)
@@ -103,11 +105,15 @@ def serve(address=ADDRESS, port=PORT):
                 payload = bytearray(packet[6:])
                 if len(payload) != payload_size:
                     logging.error('payload unexpected size: %s', payload)
-                    raise ValueError('wrong payload size %d != %d' %
-                                     (len(payload), payload_size))
+                    logging.info('assuming we got more than one packet')
                 for i in range(payload_size):
                     payload[i] = payload[i] ^ masking_key[i % 4]
-                logging.info('payload: %s', payload)
+                logging.info('payload: %s', payload[:payload_size])
+                if len(payload) != payload_size:
+                    # split off additional packet[s]
+                    packet = payload[payload_size:].to_bytes()
+                else:
+                    packet = b''
             elif not packet:
                 raise StopIteration('remote end closed')
             else:
@@ -117,6 +123,9 @@ def serve(address=ADDRESS, port=PORT):
         except (StopIteration, ConnectionResetError) as ended:
             logging.info('remote end closed: %s', ended)
             sys.exit(0)
+        # simulate having to wait for data.
+        # this is sloppy, as it will delay reception of close() message.
+        time.sleep(1)
 
 def package(payload):
     '''
