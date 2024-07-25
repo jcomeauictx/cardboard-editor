@@ -77,8 +77,9 @@ def serve(address=ADDRESS, port=PORT):
     counter = 0
     opcode = None
     packet = b''
+    closed = False
     while True: # send messages and show responses from the client
-        if opcode != 'stop':  # `opcode` still set from last iteration
+        if not closed:
             conn.send(package(MESSAGES[counter % len(MESSAGES)]))
             counter += 1
         try:
@@ -111,18 +112,19 @@ def serve(address=ADDRESS, port=PORT):
                 if len(payload) != payload_size:
                     logging.error('payload unexpected size: %s', payload)
                     logging.info('assuming we got more than one packet')
-                for i in range(payload_size):
-                    payload[i] = payload[i] ^ masking_key[i % 4]
-                logging.info('payload: %s', payload[:payload_size])
-                if len(payload) != payload_size:
                     # split off additional packet[s]
                     packet = bytes(payload[payload_size:])
+                    payload = payload[:payload_size]
                 else:
                     packet = b''
-                if payload == 'stop':
+                for i in range(payload_size):
+                    payload[i] = payload[i] ^ masking_key[i % 4]
+                logging.info('payload: %s', payload)
+                if payload == b'stop':
                     conn.send(package(
                         CLOSE.to_bytes(length=2) + b'client initiated', 'close')
                     )
+                    closed = True
                 elif opcode == 'close':
                     code, reason = int.from_bytes(payload[:2]), payload[2:]
                     logging.warning('client closed connection: %d, %s',
