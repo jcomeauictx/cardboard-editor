@@ -116,7 +116,7 @@ def serve(address=ADDRESS, port=PORT):
                 logging.info('payload: %s', payload[:payload_size])
                 if len(payload) != payload_size:
                     # split off additional packet[s]
-                    packet = payload[payload_size:].to_bytes()
+                    packet = bytes(payload[payload_size:])
                 else:
                     packet = b''
                 if payload == 'stop':

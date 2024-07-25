@@ -16,7 +16,7 @@ window.onload = function() {
     let closing = 0;
     let messageCount = 0;
     const close = function(socket, code, reason) {
-        if (closing++ == 1) {
+        if (++closing == 1) {
             console.debug("requesting server to stop");
             socket.send("stop");
         } else {
