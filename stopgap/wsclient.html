@@ -1,11 +1,67 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<!-- https://stackoverflow.com/a/13416784/493161 -->
+<meta charset="utf-8">
+<!-- prevent some browsers from requesting favicon.ico
+     https://stackoverflow.com/a/13416784/493161 -->
 <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgo=">
-<script src="wsclient.js"></script>
+<script>
+// adapted from https://en.wikipedia.org/wiki/WebSocket
+window.onload = function() {
+    // Connect to local server (wsserver.py)
+    const url = "ws://127.0.0.1:8080/";
+    const websocket = new WebSocket(url);
+    const responses = ["bar", "baz", "foo"];  // offset +1 from wsserver.py
+    const display = document.getElementById("log-window");
+    display.scrollTop = display.scrollHeight;
+    let messageCount = 0;
+    const log = function(message, end=true) {
+        display.value += message;
+        if (end) display.value += "\r\n";
+    };
+    websocket.addEventListener("open", function(event) {
+        log("Connection opened to " + url);
+    });
+
+    websocket.addEventListener("message", function(event) {
+        log("Data received: " + event.data, false);
+        messageCount += 1;
+        let response = responses[messageCount % responses.length];
+        websocket.send(response);
+        log(", responded: " + response);
+    });
+
+    websocket.addEventListener("close", function(event) {
+        log("Connection closed, code: " + event.code);
+        log("You may close this window.");
+    });
+
+    websocket.addEventListener("error", function(event) {
+        log("Connection closed due to error", event);
+    });
+
+    console.debug("wsclient.js ready");
+};
+</script>
+<style>
+* {
+        box-sizing: border-box;
+        width: 100%;
+        height: 100%;
+        font-family: "Consolas", monospace;
+}
+html {
+        font-family: "Consolas", monospace;
+}
+body {
+        padding: 8px;
+        /* disable zoom on double-tap */
+        touch-action: pan-x pan-y;
+}
+</style>
 </head>
 <body>
 <textarea id="log-window"></textarea>
 </body>
 </html>
+// vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4

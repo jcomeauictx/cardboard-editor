@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.DEBUG if __debug__ else logging.INFO)
 ADDRESS = os.getenv('LOCAL') or '127.0.0.1'
 PORT = os.getenv('PORT') or 8080
 MAGIC = b'258EAFA5-E914-47DA-95CA-C5AB0DC85B11'  # from WebSocket RFC6455
-MESSAGES = [b'foo', b'bar', b'baz']  # offset of -1 from wsclient.js
+MESSAGES = [b'foo', b'bar', b'baz']
 FIN = MASKED = 0b10000000
 PAYLOAD_SIZE = 0b01111111
 RSV1 = RSV2 = RSV3 = 0  # reserved bits
@@ -75,6 +75,7 @@ def serve(address=ADDRESS, port=PORT):
     while True: # decode messages from the client
         conn.send(package(MESSAGES[counter % len(MESSAGES)]))
         counter += 1
+        time.sleep(1)
         try:
             packet = conn.recv(4096)
             if len(packet) >= 2:
