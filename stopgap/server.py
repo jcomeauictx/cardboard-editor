@@ -4,7 +4,7 @@ server for stopgap implementation
 '''
 import sys, os, logging, socket  # pylint: disable=multiple-imports
 import posixpath as httppath
-from http.server import SimpleHTTPRequestHandler, CGIHTTPRequestHandler, \
+from http.server import SimpleHTTPRequestHandler, \
     HTTPStatus, test as serve
 from threading import Thread
 from io import BytesIO
@@ -13,7 +13,7 @@ from select import select
 ADDRESS = os.getenv('LOCAL') or '127.0.0.1'
 PORT = os.getenv('PORT') or 8000
 
-class CGIHandler(CGIHTTPRequestHandler):
+class CGIHandler(SimpleHTTPRequestHandler):
     '''
     subclass to take care of some things differently from system library
     '''
@@ -21,8 +21,6 @@ class CGIHandler(CGIHTTPRequestHandler):
         command = self.path.lstrip('/')
         if command in dir(self) and callable(getattr(self, command)):
             return getattr(self, command)()
-        if self.is_cgi():
-            return self.run_cgi()
         if self.path == '/favicon.ico':
             self.send_response(HTTPStatus.OK)
             self.send_header("Content-type", 'image/vnd')
@@ -48,7 +46,7 @@ def background():
 
 def dispatch(path):
     '''
-    launch server or handle CGI script
+    launch server
     '''
     command = httppath.splitext(httppath.split(path)[1])[0]
     logging.debug('command: %s', command)
@@ -61,8 +59,7 @@ def dispatch(path):
         finally:  # KeyboardInterrupt already trapped and sys.exit() called
             logging.debug('waiting for keepalive thread to exit')
     else:
-        print('content-type: text/html\r\n\r\n', end='')
-        print('okey-dokey')
+        logging.error('no longer supports CGI scripts')
 
 def get_ip_address(remote='1.1.1.1', port=33434):
     '''
