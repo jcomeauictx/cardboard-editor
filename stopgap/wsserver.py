@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python3 -OO
 '''
 websocket server
 
@@ -43,7 +43,7 @@ def serve(address=ADDRESS, port=PORT):
     '''
     Create socket and listen
     '''
-    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     ws = socket.socket()
     try:
         ws.bind((address, port))
@@ -81,21 +81,23 @@ def serve(address=ADDRESS, port=PORT):
             if len(packet) >= 2:
                 if (packet[0] & FIN) != FIN:
                     logging.error('we only support unfragmented messages')
-                    raise AssertionError('fragments not supported')
+                    raise NotImplementedError('fragments not supported')
                 opcode = OPCODE[packet[0] & 0xf]
                 if opcode not in SUPPORTED:
                     logging.error('we only support data messages')
                     logging.error('offending opcode: %d', opcode)
-                    raise AssertionError('opcode not supported')
+                    raise NotImplementedError('opcode not supported')
                 if opcode == 'close':
                     raise StopIteration('remote sent close message')
                 masked = bool(packet[1] & MASKED)
-                # ignore failure of client to mask (liberal in what we accept)
+                if not masked:
+                    logging.error('unmasked client data violates standard')
+                    raise NotImplementedError('unmasked data not supported')
                 payload_size = packet[1] & PAYLOAD_SIZE
                 if payload_size > 125:
                     logging.error('we only support small messages')
                     logging.error('offending size: %d', payload_size)
-                    raise AssertionError('message too large')
+                    raise ValueError('message too large')
                 masking_key = packet[2:6]
                 logging.debug('masking key: %s', masking_key)
                 payload = bytearray(packet[6:])
@@ -109,7 +111,7 @@ def serve(address=ADDRESS, port=PORT):
                 raise StopIteration('remote end closed')
             else:
                 raise ValueError('insufficient packet length: %d' % len(packet))
-        except (AssertionError, ValueError, IndexError) as error:
+        except (NotImplementedError, ValueError, IndexError) as error:
             logging.error('error in processing message: %s', error)
         except (StopIteration, ConnectionResetError) as ended:
             logging.info('remote end closed: %s', ended)
