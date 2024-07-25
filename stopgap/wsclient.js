@@ -1,25 +1,34 @@
 // adapted from https://en.wikipedia.org/wiki/WebSocket
 window.onload = function() {
     // Connect to local server (wsserver.py)
-    const websocket = new WebSocket("ws://127.0.0.1:8080/");
+    const url = "ws://127.0.0.1:8080/";
+    const websocket = new WebSocket(url);
     const responses = ["bar", "baz", "foo"];  // offset +1 from wsserver.py
+    const display = document.getElementById("log-window");
     let messageCount = 0;
+    const log = function(message, end=true) {
+        display.value += message;
+        if (end) display.value += "\r\n";
+    };
     websocket.addEventListener("open", function(event) {
-        console.debug("Connection opened");
+        log("Connection opened to " + url);
     });
 
     websocket.addEventListener("message", function(event) {
-        console.info("Data received: " + event.data);
+        log("Data received: " + event.data, false);
         messageCount += 1;
-        websocket.send(responses[messageCount % responses.length]);
+        let response = responses[messageCount % responses.length];
+        websocket.send(response);
+        log(", responded: " + response);
     });
 
     websocket.addEventListener("close", function(event) {
-        console.debug("Connection closed, code: " + event.code);
+        log("Connection closed, code: " + event.code);
+        log("You may close this window.");
     });
 
     websocket.addEventListener("error", function(event) {
-        console.debug("Connection closed due to error", event);
+        log("Connection closed due to error", event);
     });
 
     console.debug("wsclient.js ready");
