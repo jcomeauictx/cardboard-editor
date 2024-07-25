@@ -25,7 +25,7 @@ window.onload = function() {
                you wish the session to go on indefinintely.
             */
             display.scrollTop = display.scrollHeight;  // auto scroll
-            if (display.scrollTop != 0) websocket.close()
+            if (display.scrollTop != 0) websocket.close(1000, "window full");
         }
     };
     websocket.addEventListener("open", function(event) {

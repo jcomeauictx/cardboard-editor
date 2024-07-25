@@ -73,6 +73,7 @@ def serve(address=ADDRESS, port=PORT):
     sent = conn.send(response)
     logging.debug('sent response: %s, %d bytes', response, sent)
     counter = 0
+    opcode = None
     packet = b''
     while True: # send messages and show responses from the client
         conn.send(package(MESSAGES[counter % len(MESSAGES)]))
@@ -90,7 +91,7 @@ def serve(address=ADDRESS, port=PORT):
                     logging.error('offending opcode: %d', opcode)
                     raise NotImplementedError('opcode not supported')
                 if opcode == 'close':
-                    raise StopIteration('remote sent close message')
+                    logging.warning('remote sent close message')
                 masked = bool(packet[1] & MASKED)
                 if not masked:
                     logging.error('unmasked client data violates standard')
@@ -115,7 +116,7 @@ def serve(address=ADDRESS, port=PORT):
                 else:
                     packet = b''
             elif not packet:
-                raise StopIteration('remote end closed')
+                raise StopIteration('remote end closed unexpectedly')
             else:
                 raise ValueError('insufficient packet length: %d' % len(packet))
         except (NotImplementedError, ValueError, IndexError) as error:
@@ -124,8 +125,8 @@ def serve(address=ADDRESS, port=PORT):
             logging.info('remote end closed: %s', ended)
             sys.exit(0)
         # simulate having to wait for data.
-        # this is sloppy, as it will delay reception of close() message.
-        time.sleep(1)
+        if not packet and opcode != 'close':
+            time.sleep(1)
 
 def package(payload):
     '''
