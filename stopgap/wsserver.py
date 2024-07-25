@@ -13,6 +13,29 @@ ADDRESS = os.getenv('LOCAL') or '127.0.0.1'
 PORT = os.getenv('PORT') or 8080
 MAGIC = b'258EAFA5-E914-47DA-95CA-C5AB0DC85B11'  # from WebSocket RFC6455
 MESSAGES = [b'foo', b'bar', b'baz']  # offset of -1 from wsclient.js
+FIN = MASKED = 0b10000000
+PAYLOAD_SIZE = 0b01111111
+RSV1 = RSV2 = RSV3 = 0  # reserved bits
+OPCODE = {
+    0: 'continuation',
+    1: 'text',
+    2: 'binary',
+    3: 'reserved non-control',
+    4: 'reserved non-control',
+    5: 'reserved non-control',
+    6: 'reserved non-control',
+    7: 'reserved non-control',
+    8: 'close',
+    9: 'ping',
+    10: 'pong',
+    11: 'reserved control',
+    12: 'reserved control',
+    13: 'reserved control',
+    14: 'reserved control',
+    15: 'reserved control',
+}
+OPCODE.update(dict(map(reversed, OPCODE.items())))
+SUPPORTED = ('text', 'binary', 'close')
 
 # pylint: disable=consider-using-f-string
 
@@ -50,33 +73,55 @@ def serve(address=ADDRESS, port=PORT):
     logging.debug('sent response: %s, %d bytes', response, sent)
     counter = 0
     while True: # decode messages from the client
-        conn.send(MESSAGES[counter % len(MESSAGES)])
+        conn.send(package(MESSAGES[counter % len(MESSAGES)]))
         counter += 1
         try:
-            header = conn.recv(2)
-            if len(header) == 2:
-                fin = bool(header[0] & 0x80) # bit 0
-                assert fin == 1, 'We only support unfragmented messages'
-                opcode = header[0] & 0xf # bits 4-7
-                assert opcode in (1, 2), 'We only support data messages'
-                masked = bool(header[1] & 0x80) # bit 8
-                assert masked, 'The client must mask all frames'
-                payload_size = header[1] & 0x7f # bits 9-15
-                assert payload_size <= 125, 'We only support small messages'
-                masking_key = conn.recv(4)
-                payload = bytearray(conn.recv(payload_size))
+            packet = conn.recv(4096)
+            if len(packet) >= 2:
+                if (packet[0] & FIN) != FIN:
+                    logging.error('we only support unfragmented messages')
+                    raise AssertionError('fragments not supported')
+                opcode = OPCODE[packet[0] & 0xf]
+                if opcode not in SUPPORTED:
+                    logging.error('we only support data messages')
+                    logging.error('offending opcode: %d', opcode)
+                    raise AssertionError('opcode not supported')
+                if opcode == 'close':
+                    raise StopIteration('remote sent close message')
+                masked = bool(packet[1] & MASKED)
+                # ignore failure of client to mask (liberal in what we accept)
+                payload_size = packet[1] & PAYLOAD_SIZE
+                if payload_size > 125:
+                    logging.error('we only support small messages')
+                    logging.error('offending size: %d', payload_size)
+                    raise AssertionError('message too large')
+                masking_key = packet[2:6]
+                logging.debug('masking key: %s', masking_key)
+                payload = bytearray(packet[6:])
+                if len(payload) != payload_size:
+                    raise ValueError('wrong payload size %d != %d' %
+                                     len(payload), payload_size)
                 for i in range(payload_size):
                     payload[i] = payload[i] ^ masking_key[i % 4]
                 logging.info('payload: %s', payload)
-            elif not header:
+            elif not packet:
                 raise StopIteration('remote end closed')
             else:
-                raise ValueError('insufficient header length: %d' % len(header))
-        except (AssertionError, ValueError) as error:
+                raise ValueError('insufficient packet length: %d' % len(packet))
+        except (AssertionError, ValueError, IndexError) as error:
             logging.error('error in processing message: %s', error)
-        except (StopIteration, ConnectionResetError):
-            logging.info('remote end closed')
+        except (StopIteration, ConnectionResetError) as ended:
+            logging.info('remote end closed: %s', ended)
             sys.exit(0)
+
+def package(payload):
+    '''
+    wrap payload in websocket packet
+
+    assumes plain text and short message, doesn't do any checking
+    '''
+    length = len(payload)
+    return bytes((FIN | OPCODE['text'], length)) + payload
 
 if __name__ == '__main__':
     serve()

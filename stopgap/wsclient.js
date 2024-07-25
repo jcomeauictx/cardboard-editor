@@ -3,7 +3,7 @@ window.onload = function() {
     // Connect to local server (wsserver.py)
     const websocket = new WebSocket("ws://127.0.0.1:8080/");
     const responses = ["bar", "baz", "foo"];  // offset +1 from wsserver.py
-    const messageCount = 0;
+    let messageCount = 0;
     websocket.addEventListener("open", function(event) {
         console.debug("Connection opened");
     });

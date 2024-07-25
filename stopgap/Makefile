@@ -45,6 +45,8 @@ xtest.log: xtest.py
 serve: $(HTTPSERVER)
 	./$< &
 	-$(BROWSE) "$(URL)" >&2
+	# firefox always goes to background, so let's prevent server stopping
+	if [ "$(BROWSER)" = "firefox" ]; then read -p '<ENTER> when done: '; fi
 	$(MAKE) $(HTTPSERVER_PORT).stop
 wsserve: $(WSSERVER)
 	./$< &
@@ -56,4 +58,4 @@ else
 endif
 wstest:
 	$(MAKE) wsserve
-	$(MAKE) SERVER=WSSERVER serve
+	$(MAKE) BROWSER=firefox SERVER=WSSERVER serve
