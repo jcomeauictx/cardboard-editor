@@ -71,18 +71,23 @@ def serve(address=ADDRESS, port=PORT):
             if line.startswith(b'Sec-WebSocket-Key'):
                 nonce = line.split(b":")[1].strip()
         if nonce:
+            sent = connection.send(response(nonce))
+            logging.debug('sent response: %s, %d bytes', response, sent)
             launch_websocket(nonce, connection)
         else:
             logging.warning('ignoring packet %s', packet)
+
+def response(nonce):
+    '''
+    generate unique response for this nonce
+    '''
+    logging.debug('found nonce: %s', nonce)
+    return RESPONSE % b64encode(sha1(nonce + MAGIC).digest())
 
 def launch_websocket(nonce, connection):
     '''
     launch thread to handle websocket
     '''
-    logging.debug('found nonce: %s', nonce)
-    response = RESPONSE % b64encode(sha1(nonce + MAGIC).digest())
-    sent = connection.send(response)
-    logging.debug('sent response: %s, %d bytes', response, sent)
     thread = Thread(target=handle, args=(connection,),
                     name=nonce, daemon=True)
     thread.start()
