@@ -28,6 +28,7 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
         '''
         handle favicon.ico requests internally
         '''
+        logging.debug('WebSocketHandler.send_head() called')
         command = self.path.lstrip('/')
         if command in dir(self) and callable(getattr(self, command)):
             return getattr(self, command)()
