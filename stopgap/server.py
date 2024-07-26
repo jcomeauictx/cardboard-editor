@@ -4,8 +4,7 @@ server for stopgap implementation
 '''
 import sys, os, logging, socket  # pylint: disable=multiple-imports
 import posixpath as httppath
-from http.server import SimpleHTTPRequestHandler, \
-    HTTPStatus, test as serve
+from http.server import SimpleHTTPRequestHandler, HTTPStatus, test as serve
 from threading import Thread
 from io import BytesIO
 from select import select
@@ -13,7 +12,7 @@ from select import select
 ADDRESS = os.getenv('LOCAL') or '127.0.0.1'
 PORT = os.getenv('PORT') or 8000
 
-class CGIHandler(SimpleHTTPRequestHandler):
+class WebSocketHandler(SimpleHTTPRequestHandler):
     '''
     subclass to take care of some things differently from system library
     '''
@@ -55,7 +54,7 @@ def dispatch(path):
         keepalive = Thread(target=background, daemon=True)
         keepalive.start()
         try:
-            serve(HandlerClass=CGIHandler, bind=ADDRESS, port=PORT)
+            serve(HandlerClass=WebSocketHandler, bind=ADDRESS, port=PORT)
         finally:  # KeyboardInterrupt already trapped and sys.exit() called
             logging.debug('waiting for keepalive thread to exit')
     else:
