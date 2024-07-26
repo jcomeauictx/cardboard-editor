@@ -54,7 +54,6 @@ def serve(address=ADDRESS, port=PORT):
     '''
     Create socket and listen
     '''
-    # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     websocket = socket.socket()
     try:
         websocket.bind((address, port))
@@ -74,7 +73,7 @@ def serve(address=ADDRESS, port=PORT):
         if nonce:
             launch_websocket(nonce, connection)
         else:
-            console.warning('ignoring packet %s', packet)
+            logging.warning('ignoring packet %s', packet)
 
 def launch_websocket(nonce, connection):
     '''
@@ -92,6 +91,7 @@ def handle(connection):
     '''
     handle two-way communications with websocket client
     '''
+    # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     logging.debug('thread starting handle(%s)', connection)
     counter = 0
     opcode = None
