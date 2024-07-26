@@ -4,7 +4,7 @@ test that X is running and will display our windows
 '''
 import logging
 import tkinter as tk
-from tkinter import ttk
+#from tkinter import ttk
 logging.basicConfig(level=logging.DEBUG if __debug__ else logging.WARNING)
 logging.debug('starting program')
 window = tk.Tk()
