@@ -54,7 +54,8 @@ window.onload = function() {
         log(", responded: " + response);
     });
     websocket.addEventListener("close", function(event) {
-        log("Connection closed, code: " + event.code);
+        log("Connection closed, code: " + event.code + ", reason: '" +
+            event.reason + "', was clean: " + event.wasClean);
         log("You may close this window.");
     });
     websocket.addEventListener("error", function(event) {
