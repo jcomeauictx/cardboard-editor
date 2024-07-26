@@ -72,17 +72,26 @@ def serve(address=ADDRESS, port=PORT):
             if line.startswith(b'Sec-WebSocket-Key'):
                 nonce = line.split(b":")[1].strip()
         if nonce:
-            logging.debug('found nonce: %s', nonce)
-            response = RESPONSE % b64encode(sha1(nonce + MAGIC).digest())
-            sent = connection.send(response)
-            logging.debug('sent response: %s, %d bytes', response, sent)
-            thread = Thread(target=handle, args=(connection,),
-                            name=nonce, daemon=True)
-            thread.start()
+            launch_websocket(nonce, connection)
         else:
             console.warning('ignoring packet %s', packet)
 
+def launch_websocket(nonce, connection):
+    '''
+    launch thread to handle websocket
+    '''
+    logging.debug('found nonce: %s', nonce)
+    response = RESPONSE % b64encode(sha1(nonce + MAGIC).digest())
+    sent = connection.send(response)
+    logging.debug('sent response: %s, %d bytes', response, sent)
+    thread = Thread(target=handle, args=(connection,),
+                    name=nonce, daemon=True)
+    thread.start()
+
 def handle(connection):
+    '''
+    handle two-way communications with websocket client
+    '''
     logging.debug('thread starting handle(%s)', connection)
     counter = 0
     opcode = None
