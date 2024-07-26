@@ -22,7 +22,7 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
         handle WebSocket requests
         '''
         logging.debug('handling GET request for %s', self.path)
-        logging.debug('socket: %s', self.connection)
+        logging.debug('socket at do_GET(): %s', self.connection)
         return super().do_GET()
 
     def do_POST(self):
@@ -57,7 +57,10 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
             self.send_header('Connection', 'Upgrade')
             self.send_header('Sec-WebSocket-Accept', nonce)
             self.end_headers()
-            launch_websocket(nonce, self.connection.dup())
+            self.wfile.flush()
+            connection = self.connection.dup()
+            logging.debug('socket just before launch_websocket: %s', connection)
+            launch_websocket(nonce, connection)
             return None
         return super().send_head()
 
