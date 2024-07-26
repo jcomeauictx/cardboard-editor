@@ -122,7 +122,7 @@ def serve(address=ADDRESS, port=PORT):
                 logging.info('payload: %s', payload)
                 if payload == b'stop':
                     conn.send(package(
-                        CLOSE.to_bytes(length=2) + b'client initiated', 'close')
+                        CLOSE.to_bytes(length=2) + b'client requested', 'close')
                     )
                     closed = True
                 elif opcode == 'close':
