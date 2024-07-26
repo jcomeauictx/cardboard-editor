@@ -18,17 +18,18 @@ WSSERVER_URL := http://$(LOCAL):$(HTTPSERVER_PORT)/wsclient.html
 SERVER = HTTPSERVER
 PORT = $($(SERVER)_PORT)
 URL = $($(SERVER)_URL)
+PYTHON ?= python3
 ifneq ($(SHOWENV),)
 	export
 endif
 all: serve
 xtest: xtest.py
-	./$<
+	$(PYTHON) $<
 debug: tkinter.debug
 tkinter.debug:
 	@echo .gdbinit will run xtest.py >&2
 	@echo '`bt` for backtrace after segfault' >&2
-	gdb python3
+	gdb $(PYTHON)
 stop: $(WSSERVER_PORT).stop $(HTTPSERVER_PORT).stop
 %.stop:
 	pid=$$(lsof -t -itcp@$(LOCAL):$* -s tcp:listen); \
@@ -42,15 +43,15 @@ stop: $(WSSERVER_PORT).stop $(HTTPSERVER_PORT).stop
 strace.debug:
 	$(MAKE) GDB='gdb --nx --args' xtest.log
 xtest.log: xtest.py
-	$(GDB) strace -f -v -o $@ -s 512 python3 $<
+	$(GDB) strace -f -v -o $@ -s 512 $(PYTHON) $<
 serve: $(HTTPSERVER)
-	./$< &
+	$(PYTHON) $< &
 	-$(BROWSE) "$(URL)" >&2
 	# prevent server stopping in case browser goes to background
 	read -p '<ENTER> when done: '
 	$(MAKE) $(HTTPSERVER_PORT).stop
 wsserve: $(WSSERVER)
-	./$< &
+	$(PYTHON) $< &
 env:
 ifneq ($(SHOWENV),)
 	$@
