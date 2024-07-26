@@ -26,7 +26,7 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
             self.send_header("Content-Length", '0')
             self.end_headers()
             return BytesIO(b'')
-        return SimpleHTTPRequestHandler.send_head(self)
+        return super().send_head()
 
 def background():
     '''
