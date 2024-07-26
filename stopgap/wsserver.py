@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python3 -OO
 '''
 websocket server
 
@@ -7,14 +7,15 @@ adapted from https://en.wikipedia.org/wiki/WebSocket
 import sys, os, time, socket, logging  # pylint: disable=multiple-imports
 from base64 import b64encode
 from hashlib import sha1
+from threading import Thread
 logging.basicConfig(level=logging.DEBUG if __debug__ else logging.INFO)
 
 ADDRESS = os.getenv('LOCAL') or '127.0.0.1'
 PORT = os.getenv('PORT') or 8080
 MAGIC = b'258EAFA5-E914-47DA-95CA-C5AB0DC85B11'  # from WebSocket RFC6455
 MESSAGES = [b'foo', b'bar', b'baz']  # simulated message stream
-FIN = MASKED = 0b10000000
-PAYLOAD_SIZE = 0b01111111
+FIN = MASKED = 0b10000000  # bitmask for 'FIN' and 'MASKED' flag bits
+PAYLOAD_SIZE = 0b01111111  # bitmask for payload size
 RSV1 = RSV2 = RSV3 = 0  # reserved bits
 CLOSE = 1000  # normal closure code per RFC 6455
 OPCODE = {
@@ -39,6 +40,13 @@ OPCODE = {
 OPCODE.update(dict(map(reversed, OPCODE.items())))
 SUPPORTED = ('text', 'binary', 'close')
 MAXPACKET = 4096  # quit on any packets this size or greater
+RESPONSE = (
+    b'HTTP/1.1 101 Switching Protocols\r\n'
+    b'Upgrade: websocket\r\n'
+    b'Connection: Upgrade\r\n'
+    b'Sec-WebSocket-Accept: %s\r\n'
+    b'\r\n'
+)
 
 # pylint: disable=consider-using-f-string
 
@@ -47,43 +55,45 @@ def serve(address=ADDRESS, port=PORT):
     Create socket and listen
     '''
     # pylint: disable=too-many-locals, too-many-branches, too-many-statements
-    ws = socket.socket()
+    websocket = socket.socket()
     try:
-        ws.bind((address, port))
+        websocket.bind((address, port))
     except TypeError:
-        ws.bind((address, socket.getservbyname(port)))
-    logging.debug('listening on %s', ws)
-    ws.listen()
-    conn = ws.accept()[0]
-    nonce = b''
-    # Parse request
-    for line in conn.recv(MAXPACKET).split(b'\r\n'):
-        logging.debug('received line: %s', line)
-        if line.startswith(b'Sec-WebSocket-Key'):
-            nonce = line.split(b":")[1].strip()
+        websocket.bind((address, socket.getservbyname(port)))
+    logging.debug('listening on %s', websocket)
+    websocket.listen()
+    while True:
+        connection = websocket.accept()[0]
+        nonce = b''
+        # Parse request
+        packet = connection.recv(MAXPACKET)
+        for line in packet.split(b'\r\n'):
+            logging.debug('received line: %s', line)
+            if line.startswith(b'Sec-WebSocket-Key'):
+                nonce = line.split(b":")[1].strip()
+        if nonce:
             logging.debug('found nonce: %s', nonce)
+            response = RESPONSE % b64encode(sha1(nonce + MAGIC).digest())
+            sent = connection.send(response)
+            logging.debug('sent response: %s, %d bytes', response, sent)
+            thread = Thread(target=handle, args=(connection,),
+                            name=nonce, daemon=True)
+            thread.start()
+        else:
+            console.warning('ignoring packet %s', packet)
 
-    # Format response
-    response = (
-        b'HTTP/1.1 101 Switching Protocols\r\n'
-        b'Upgrade: websocket\r\n'
-        b'Connection: Upgrade\r\n'
-        b'Sec-WebSocket-Accept: %s\r\n'
-        b'\r\n'
-    ) % b64encode(sha1(nonce + MAGIC).digest())
-
-    sent = conn.send(response)
-    logging.debug('sent response: %s, %d bytes', response, sent)
+def handle(connection):
+    logging.debug('thread starting handle(%s)', connection)
     counter = 0
     opcode = None
     packet = b''
     closed = False
     while True: # send messages and show responses from the client
         if not closed:
-            conn.send(package(MESSAGES[counter % len(MESSAGES)]))
+            connection.send(package(MESSAGES[counter % len(MESSAGES)]))
             counter += 1
         try:
-            packet = packet or conn.recv(MAXPACKET)
+            packet = packet or connection.recv(MAXPACKET)
             if len(packet) >= 2:
                 if (packet[0] & FIN) != FIN:
                     logging.error('we only support unfragmented messages')
@@ -121,7 +131,7 @@ def serve(address=ADDRESS, port=PORT):
                     payload[i] = payload[i] ^ masking_key[i % 4]
                 logging.info('payload: %s', payload)
                 if payload == b'stop':
-                    conn.send(package(
+                    connection.send(package(
                         CLOSE.to_bytes(length=2) +
                             b"server closed on client's request",
                         'close')
@@ -140,8 +150,8 @@ def serve(address=ADDRESS, port=PORT):
             logging.error('error in processing message: %s', error)
         except (StopIteration, ConnectionResetError, BrokenPipeError) as ended:
             logging.info('remote end closed: %s', ended)
-            conn.shutdown(socket.SHUT_WR)
-            conn.close()
+            connection.shutdown(socket.SHUT_WR)
+            connection.close()
             sys.exit(0)
         # simulate having to wait for data, if packet not already queued
         if not packet:
