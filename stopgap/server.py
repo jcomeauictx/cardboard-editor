@@ -5,6 +5,7 @@ server for stopgap implementation
 import sys, os, logging, socket  # pylint: disable=multiple-imports
 import posixpath as httppath
 from http.server import SimpleHTTPRequestHandler, HTTPStatus, test as serve
+from wsserver import launch_websocket
 from threading import Thread
 from io import BytesIO
 from select import select
@@ -16,12 +17,12 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
     '''
     subclass to take care of some things differently from system library
     '''
-
     def do_GET(self):
         '''
-        handle favicon.ico requests internally
+        handle WebSocket requests
         '''
         logging.debug('handling GET request for %s', self.path)
+        logging.debug('socket: %s', self.connection)
         return super().do_GET()
 
     def do_POST(self):
@@ -43,9 +44,20 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
         if self.path == '/favicon.ico':
             logging.debug('sending fake (empty) favicon.ico')
             self.send_response(HTTPStatus.OK)
-            self.send_header("Content-type", 'image/png')
-            self.send_header("Content-Length", '0')
+            self.send_header('Content-type', 'image/png')
+            self.send_header('Content-Length', '0')
             self.end_headers()
+            return None
+        elif 'Sec-WebSocket-Key' in self.headers:
+            logging.debug('websocket request received')
+            nonce = self.headers['Sec-WebSocket-Key']
+            self.send_response(HTTPStatus.SWITCHING_PROTOCOLS,
+                               'Switching Protocols')
+            self.send_header('Upgrade', 'websocket')
+            self.send_header('Connection', 'Upgrade')
+            self.send_header('Sec-WebSocket-Accept', nonce)
+            self.end_headers()
+            launch_websocket(nonce, self.connection.dup())
             return None
         return super().send_head()
 
