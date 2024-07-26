@@ -66,6 +66,9 @@ endif
 wstest:
 	$(MAKE) wsserve
 	$(MAKE) SERVER=WSSERVER WSQUERY="?wsserver=$(WSSERVER_HOST)" serve
+wstest.new:
+	$(MAKE) wsserve
+	$(MAKE) SERVER=WSSERVER serve
 %.pylint: %.py
 	$(PYLINT) $<
 pylint: $(SCRIPTS:.py=.pylint)
