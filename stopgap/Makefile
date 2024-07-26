@@ -10,13 +10,16 @@ endif
 LOCAL := 127.0.0.1
 HTTPSERVER := server.py
 HTTPSERVER_PORT := 8000
-HTTPSERVER_URL := http://$(LOCAL):$(HTTPSERVER_PORT)/stopgap.html
+HTTPSERVER_HOST := $(LOCAL):$(HTTPSERVER_PORT)
+HTTPSERVER_URL := http://$(HTTPSERVER_HOST)/stopgap.html
 WSSERVER := wsserver.py
 WSSERVER_PORT := 8080
-WSSERVER_URL := http://$(LOCAL):$(HTTPSERVER_PORT)/wsclient.html
+WSSERVER_HOST := $(LOCAL):$(WSSERVER_PORT)
+WSSERVER_URL := http://$(HTTPSERVER_HOST)/wsclient.html$(WSQUERY)
 # for next two variables, use simple `=` to evaluate at runtime
 SERVER = HTTPSERVER
 PORT = $($(SERVER)_PORT)
+HOST = $($(SERVER)_HOST)
 URL = $($(SERVER)_URL)
 PYTHON ?= python3
 PYLINT ?= $(shell which pylint pylint3 true 2>/dev/null | head -n 1)
@@ -62,7 +65,7 @@ else
 endif
 wstest:
 	$(MAKE) wsserve
-	$(MAKE) SERVER=WSSERVER serve
+	$(MAKE) SERVER=WSSERVER WSQUERY="?wsserver=$(WSSERVER_HOST)" serve
 %.pylint: %.py
 	$(PYLINT) $<
 pylint: $(SCRIPTS:.py=.pylint)

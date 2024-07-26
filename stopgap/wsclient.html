@@ -8,8 +8,10 @@
 <script>
 // adapted from https://en.wikipedia.org/wiki/WebSocket
 window.onload = function() {
-    // Connect to local server (wsserver.py)
-    const url = "ws://127.0.0.1:8080/";
+    // Connect to local server
+    const server = new URLSearchParams(location.search).get("wsserver") ||
+        location.host;
+    const url = "ws:" + server + "/";
     const websocket = new WebSocket(url);
     const responses = ["foo", "bar", "baz"];
     const display = document.getElementById("log-window");
