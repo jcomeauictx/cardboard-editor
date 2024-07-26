@@ -94,31 +94,34 @@ def handle(connection):
             counter += 1
         try:
             packet = packet or connection.recv(MAXPACKET)
+            offset = 0
             if len(packet) >= 2:
-                if (packet[0] & FIN) != FIN:
+                if (packet[offset] & FIN) != FIN:
                     logging.error('we only support unfragmented messages')
                     raise NotImplementedError('fragments not supported')
                 if len(packet) == MAXPACKET:
                     logging.error('large packets not supported')
                     raise StopIteration('packet too large, cannot re-sync')
-                opcode = OPCODE[packet[0] & 0xf]
+                opcode = OPCODE[packet[offset] & 0xf]
                 logging.debug('opcode: %s', opcode)
                 if opcode not in SUPPORTED:
                     logging.error('we only support opcodes %s', SUPPORTED)
                     logging.error('offending opcode: %d', opcode)
                     raise NotImplementedError('opcode not supported')
-                masked = bool(packet[1] & MASKED)
+                masked = bool(packet[offset + 1] & MASKED)
                 if not masked:
                     logging.error('unmasked client data violates standard')
                     raise NotImplementedError('unmasked data not supported')
-                payload_size = packet[1] & PAYLOAD_SIZE
+                payload_size = packet[offset + 1] & PAYLOAD_SIZE
                 if payload_size > 125:
                     logging.error('we only support small messages')
                     logging.error('offending size: %d', payload_size)
                     raise ValueError('message too large')
-                masking_key = packet[2:6]
+                offset = 2  # move to masking key
+                masking_key = packet[offset:offset + 4]
                 logging.debug('masking key: %s', masking_key)
-                payload = bytearray(packet[6:])
+                offset += 4  # skip past masking key to payload
+                payload = bytearray(packet[offset:])
                 if len(payload) != payload_size:
                     logging.error('payload unexpected size: %s', payload)
                     logging.info('assuming we got more than one packet')
