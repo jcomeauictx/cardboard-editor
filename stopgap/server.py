@@ -5,7 +5,7 @@ server for stopgap implementation
 import sys, os, logging, socket  # pylint: disable=multiple-imports
 import posixpath as httppath
 from http.server import SimpleHTTPRequestHandler, HTTPStatus, test as serve
-from wsserver import launch_websocket
+from wsserver import create_key, launch_websocket
 from threading import Thread
 from io import BytesIO
 from select import select
@@ -50,12 +50,12 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
             return None
         elif 'Sec-WebSocket-Key' in self.headers:
             logging.debug('websocket request received')
-            nonce = self.headers['Sec-WebSocket-Key']
+            nonce = self.headers['Sec-WebSocket-Key'].encode()
             self.send_response(HTTPStatus.SWITCHING_PROTOCOLS,
                                'Switching Protocols')
             self.send_header('Upgrade', 'websocket')
             self.send_header('Connection', 'Upgrade')
-            self.send_header('Sec-WebSocket-Accept', nonce)
+            self.send_header('Sec-WebSocket-Accept', create_key(nonce).decode())
             self.end_headers()
             self.wfile.flush()
             connection = self.connection.dup()
