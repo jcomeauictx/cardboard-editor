@@ -19,6 +19,8 @@ SERVER = HTTPSERVER
 PORT = $($(SERVER)_PORT)
 URL = $($(SERVER)_URL)
 PYTHON ?= python3
+PYLINT ?= $(shell which pylint pylint3 true 2>/dev/null | head -n 1)
+SCRIPTS := $(wildcard *.py)
 ifneq ($(SHOWENV),)
 	export
 endif
@@ -61,3 +63,6 @@ endif
 wstest:
 	$(MAKE) wsserve
 	$(MAKE) SERVER=WSSERVER serve
+%.pylint: %.py
+	$(PYLINT) $<
+pylint: $(SCRIPTS:.py=.pylint)
