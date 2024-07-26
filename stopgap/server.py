@@ -16,7 +16,18 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
     '''
     subclass to take care of some things differently from system library
     '''
+
+    def do_GET(self):
+        '''
+        handle favicon.ico requests internally
+        '''
+        logging.debug('handling GET request for %s', self.path)
+        return super().do_GET()
+
     def send_head(self):
+        '''
+        handle favicon.ico requests internally
+        '''
         command = self.path.lstrip('/')
         if command in dir(self) and callable(getattr(self, command)):
             return getattr(self, command)()
