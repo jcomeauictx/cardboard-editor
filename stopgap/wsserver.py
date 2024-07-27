@@ -105,7 +105,7 @@ def handle(connection):
     closed = False
     while True: # send messages and show responses from the client
         if not closed:
-            logging.debug('connection: %s', connection)
+            logging.debug('connection: %s, counter: %d', connection, counter)
             connection.send(package(MESSAGES[counter % len(MESSAGES)]))
             counter += 1
         try:
