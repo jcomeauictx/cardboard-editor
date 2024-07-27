@@ -96,7 +96,7 @@ def launch_websocket(nonce, connection):
     launch thread to handle websocket
     '''
     thread = Thread(target=handle, args=(connection,),
-                    name=nonce, daemon=True)
+                    name=nonce, daemon=False)
     thread.start()
 
 def handle(connection):
