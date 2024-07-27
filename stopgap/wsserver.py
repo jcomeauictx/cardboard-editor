@@ -40,6 +40,7 @@ OPCODE = {
 OPCODE.update(dict(map(reversed, OPCODE.items())))
 SUPPORTED = ('text', 'binary', 'close')
 MAXPACKET = 4096  # quit on any packets this size or greater
+MAX_RETRIES = 3
 RESPONSE = (
     b'HTTP/1.1 101 Switching Protocols\r\n'
     b'Upgrade: websocket\r\n'
@@ -104,16 +105,28 @@ def handle(connection):
     '''
     # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     logging.debug('thread starting handle(%s)', connection)
-    counter = 0
+    counter = retries = 0
     opcode = None
     packet = b''
     closed = False
     while True: # send messages and show responses from the client
         if not closed:
-            logging.debug('connection: %s, counter: %d', connection, counter)
-            connection.send(package(MESSAGES[counter % len(MESSAGES)]))
-            counter += 1
+            message = MESSAGES[counter % len(MESSAGES)]
+            logging.debug('sending %s on %s', message, connection)
+            try:
+                connection.send(package(message))
+                counter += 1
+                retries = 0
+            except BrokenPipeError as send_failed:
+                if retries < MAX_RETRIES:
+                    logging.debug('send failed, will try again')
+                    retries += 1
+                    time.sleep(1)
+                    continue
+                else:
+                    raise send_failed
         try:
+            logging.debug('receiving packet on %s', connection)
             packet = packet or connection.recv(MAXPACKET)
             offset = 0
             if len(packet) >= 2:
