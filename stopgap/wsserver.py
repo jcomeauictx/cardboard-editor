@@ -7,7 +7,7 @@ adapted from https://en.wikipedia.org/wiki/WebSocket
 import sys, os, time, socket, logging  # pylint: disable=multiple-imports
 from base64 import b64encode
 from hashlib import sha1
-from threading import Thread
+from threading import Thread, enumerate as threading_enumerate
 logging.basicConfig(level=logging.DEBUG if __debug__ else logging.INFO)
 
 ADDRESS = os.getenv('LOCAL') or '127.0.0.1'
@@ -94,6 +94,11 @@ def create_key(nonce):
 def launch_websocket(nonce, connection):
     '''
     launch thread to handle websocket
+
+    setting daemon=True reduces overhead, because the thread will terminate
+    by itself when the program exits, but it causes the wfile of the
+    connection (rfile of the socket) to disappear shortly after the first
+    `send`, when called with a dup'd connection (as from server.py).
     '''
     thread = Thread(target=handle, args=(connection,),
                     name=nonce, daemon=False)
@@ -190,6 +195,8 @@ def handle(connection):
                 connection.shutdown(socket.SHUT_WR)
                 connection.close()
             finally:
+                threads = threading_enumerate()
+                logging.debug('threads remaining: %s', threads)
                 sys.exit(0)
         # simulate having to wait for data, if packet not already queued
         if not packet:
@@ -207,4 +214,7 @@ def package(payload, opcode='text'):
     return packed
 
 if __name__ == '__main__':
-    serve()
+    try:
+        serve()
+    finally:
+        logging.debug('exiting __main__')

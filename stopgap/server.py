@@ -5,7 +5,7 @@ server for stopgap implementation
 import sys, os, logging, socket  # pylint: disable=multiple-imports
 import posixpath as httppath
 from http.server import SimpleHTTPRequestHandler, HTTPStatus, test as serve
-from threading import Thread
+from threading import Thread, enumerate as threading_enumerate
 from select import select
 from wsserver import create_key, launch_websocket
 
@@ -68,7 +68,9 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
 
 def background():
     '''
-    run in separate thread to keep server active while browser in foreground
+    iPhone trick for running from iSH
+
+    runs in separate thread to keep server active while browser in foreground
     '''
     try:
         with open('/dev/location', encoding='utf-8') as infile:
@@ -94,6 +96,8 @@ def dispatch(path):
         try:
             serve(HandlerClass=WebSocketHandler, bind=ADDRESS, port=PORT)
         finally:  # KeyboardInterrupt already trapped and sys.exit() called
+            threads = threading_enumerate()
+            logging.debug('threads: %s', threads)
             logging.debug('waiting for keepalive thread to exit')
     else:
         logging.error('no longer supports CGI scripts')
