@@ -55,10 +55,13 @@ def serve(address=ADDRESS, port=PORT):
     Create socket and listen
     '''
     websocket = socket.socket()
+    # make sure port is an integer
     try:
-        websocket.bind((address, port))
-    except TypeError:
-        websocket.bind((address, socket.getservbyname(port)))
+        port = int(port)
+    except ValueError:
+        port = socket.getservbyname(port)
+    logging.info('wsserver attempting to bind %s', repr((address, port)))
+    websocket.bind((address, port))
     logging.debug('listening on %s', websocket)
     websocket.listen()
     while True:
@@ -73,7 +76,7 @@ def serve(address=ADDRESS, port=PORT):
         if nonce:
             response = RESPONSE % create_key(nonce)
             sent = connection.send(response)
-            logging.debug('sent response, %d bytes', response, sent)
+            logging.debug('sent response %r, %d bytes', response, sent)
             launch_websocket(nonce.decode(), connection)
         else:
             logging.warning('ignoring packet %s', packet)
@@ -169,9 +172,11 @@ def handle(connection):
             logging.error('error in processing message: %s', error)
         except (StopIteration, ConnectionResetError, BrokenPipeError) as ended:
             logging.info('remote end closed: %s', ended)
-            connection.shutdown(socket.SHUT_WR)
-            connection.close()
-            sys.exit(0)
+            try:  # ignore failure on shutdown
+                connection.shutdown(socket.SHUT_WR)
+                connection.close()
+            finally:
+                sys.exit(0)
         # simulate having to wait for data, if packet not already queued
         if not packet:
             time.sleep(1)

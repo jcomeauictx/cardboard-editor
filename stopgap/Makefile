@@ -50,12 +50,21 @@ strace.debug:
 xtest.log: xtest.py
 	$(GDB) strace -f -v -o $@ -s 512 $(PYTHON) $<
 serve: $(HTTPSERVER)
+	# check for port in use before starting
+	# https://stackoverflow.com/a/77400250/493161
+	lsof -itcp:8000 || true
+	fuser 8000/tcp || true
 	$(PYTHON) $< &
+	sleep 1  # give server a chance to start before launching browser
 	-$(BROWSE) "$(URL)" >&2
 	# prevent server stopping in case browser goes to background
 	read -p '<ENTER> when done: '
 	$(MAKE) $(HTTPSERVER_PORT).stop
 wsserve: $(WSSERVER)
+	# check for port in use before starting
+	# https://stackoverflow.com/a/77400250/493161
+	lsof -itcp:8080 || true
+	fuser 8080/tcp || true
 	$(PYTHON) $< &
 env:
 ifneq ($(SHOWENV),)
@@ -67,7 +76,6 @@ wstest:
 	$(MAKE) wsserve
 	$(MAKE) SERVER=WSSERVER WSQUERY="?wsserver=$(WSSERVER_HOST)" serve
 wstest.new:
-	$(MAKE) wsserve
 	$(MAKE) SERVER=WSSERVER serve
 %.pylint: %.py
 	$(PYLINT) $<

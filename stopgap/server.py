@@ -38,7 +38,7 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
 
     def send_head(self):
         '''
-        handle favicon.ico requests internally
+        handle favicon.ico and websocket requests internally
         '''
         logging.debug('WebSocketHandler.send_head() called')
         if self.path == '/favicon.ico':
@@ -60,7 +60,7 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
             self.wfile.flush()
             connection = self.connection.dup()
             logging.debug('socket just before launch_websocket: %s', connection)
-            launch_websocket(nonce, connection)
+            launch_websocket(nonce.decode(), connection)
             return None
         return super().send_head()
 
