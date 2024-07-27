@@ -5,13 +5,14 @@ server for stopgap implementation
 import sys, os, logging, socket  # pylint: disable=multiple-imports
 import posixpath as httppath
 from http.server import SimpleHTTPRequestHandler, HTTPStatus, test as serve
-from wsserver import create_key, launch_websocket
 from threading import Thread
-from io import BytesIO
 from select import select
+from wsserver import create_key, launch_websocket
 
 ADDRESS = os.getenv('LOCAL') or '127.0.0.1'
 PORT = os.getenv('PORT') or 8000
+
+# pylint: disable=consider-using-f-string
 
 class WebSocketHandler(SimpleHTTPRequestHandler):
     '''
@@ -25,7 +26,7 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
         logging.debug('socket at do_GET(): %s', self.connection)
         return super().do_GET()
 
-    def do_POST(self):
+    def do_POST(self):  # pylint: disable=invalid-name
         '''
         handle POST calls with command functions
         '''
@@ -33,8 +34,9 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
         command = self.path.lstrip('/')
         if command in dir(self) and callable(getattr(self, command)):
             return getattr(self, command)()
-        else:
-            super().do_POST()
+        self.send_error(HTTPStatus.NOT_IMPLEMENTED,
+                        'Command %s unsupported' % command)
+        return None
 
     def send_head(self):
         '''
@@ -48,7 +50,7 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
             self.send_header('Content-Length', '0')
             self.end_headers()
             return None
-        elif 'Sec-WebSocket-Key' in self.headers:
+        if 'Sec-WebSocket-Key' in self.headers:
             logging.debug('websocket request received')
             nonce = self.headers['Sec-WebSocket-Key'].encode()
             self.send_response(HTTPStatus.SWITCHING_PROTOCOLS,

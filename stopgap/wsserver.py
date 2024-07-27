@@ -123,8 +123,7 @@ def handle(connection):
                     retries += 1
                     time.sleep(1)
                     continue
-                else:
-                    raise send_failed
+                raise send_failed
         try:
             logging.debug('receiving packet on %s', connection)
             packet = packet or connection.recv(MAXPACKET)
