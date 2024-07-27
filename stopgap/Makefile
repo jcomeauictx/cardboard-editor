@@ -55,7 +55,8 @@ serve: $(HTTPSERVER)
 	lsof -itcp:8000 || true
 	fuser 8000/tcp || true
 	$(PYTHON) $< &
-	sleep 1  # give server a chance to start before launching browser
+	#sleep 1  # give server a chance to start before launching browser
+	# (above `sleep` commented out because SO_REUSEADDR option fixed it)
 	-$(BROWSE) "$(URL)" >&2
 	# prevent server stopping in case browser goes to background
 	read -p '<ENTER> when done: '

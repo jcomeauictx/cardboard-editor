@@ -55,6 +55,8 @@ def serve(address=ADDRESS, port=PORT):
     Create socket and listen
     '''
     websocket = socket.socket()
+    # allow listening even if client is already attempting to connect
+    websocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     # make sure port is an integer
     try:
         port = int(port)
