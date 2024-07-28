@@ -173,13 +173,16 @@ def handle(connection):
                 logging.info('payload: %s', payload)
                 if payload == b'stop':
                     connection.send(package(
-                        CLOSE.to_bytes(length=2, byteorder='big') +
+                        CLOSE.to_bytes(2, 'big') +
                             b"server closed on client's request",
                         'close')
                     )
                     closed = True
                 elif opcode == 'close':
-                    code, reason = int.from_bytes(payload[:2]), payload[2:]
+                    code, reason = (
+                        int.from_bytes(payload[:2], 'big'),
+                        payload[2:]
+                    )
                     logging.warning('client closed connection: %d, %s',
                                     code, reason)
                     raise StopIteration('remote end initiated closure')
