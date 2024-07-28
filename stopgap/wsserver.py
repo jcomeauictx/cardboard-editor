@@ -173,7 +173,7 @@ def handle(connection):
                 logging.info('payload: %s', payload)
                 if payload == b'stop':
                     connection.send(package(
-                        CLOSE.to_bytes(length=2) +
+                        CLOSE.to_bytes(length=2, byteorder='big') +
                             b"server closed on client's request",
                         'close')
                     )
