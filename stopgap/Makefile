@@ -52,8 +52,10 @@ xtest.log: xtest.py
 serve: $(HTTPSERVER)
 	# check for port in use before starting
 	# https://stackoverflow.com/a/77400250/493161
-	lsof -itcp:8000 || true
-	fuser 8000/tcp || true
+	# NOTE that these return true (0) if port in use and false (1) if not
+	# so we need to invert the status with `!` to force an error
+	! lsof -itcp:8000
+	! fuser 8000/tcp
 	$(PYTHON) $< &
 	#sleep 1  # give server a chance to start before launching browser
 	# (above `sleep` commented out because SO_REUSEADDR option fixed it)
@@ -62,10 +64,9 @@ serve: $(HTTPSERVER)
 	read -p '<ENTER> when done: '
 	$(MAKE) $(HTTPSERVER_PORT).stop
 wsserve: $(WSSERVER)
-	# check for port in use before starting
-	# https://stackoverflow.com/a/77400250/493161
-	lsof -itcp:8080 || true
-	fuser 8080/tcp || true
+	# check for port in use before starting, see notes under `serve:`
+	! lsof -itcp:8080
+	! fuser 8080/tcp
 	$(PYTHON) $< &
 env:
 ifneq ($(SHOWENV),)
