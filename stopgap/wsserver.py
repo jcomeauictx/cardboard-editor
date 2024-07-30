@@ -98,7 +98,7 @@ def launch_websocket(nonce, connection):
     setting daemon=True reduces overhead, because the thread will terminate
     by itself when the program exits, but it causes the wfile of the
     connection (rfile of the socket) to disappear shortly after the first
-    `send`, when called with a dup'd connection UNLESS the originnal socket
+    `send`, when called with a dup'd connection UNLESS the original socket
     is closed. I don't understand why, just found out experimentally.
     '''
     socketcopy = connection.dup()
