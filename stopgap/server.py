@@ -68,7 +68,9 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
             self.wfile.flush()
             # removing .dup() gives OSError: [Errno 9] Bad file descriptor
             connection = self.connection.dup()
-            logging.debug('socket just before launch_websocket: %s', connection)
+            self.connection.close()
+            logging.debug('socket for websocket: %s', connection)
+            logging.debug('original socket: %s', self.connection)
             launch_websocket(nonce.decode(), connection)
             return None
         return super().send_head()
