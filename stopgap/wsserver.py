@@ -100,9 +100,11 @@ def launch_websocket(nonce, connection):
     connection (rfile of the socket) to disappear shortly after the first
     `send`, when called with a dup'd connection (as from server.py).
     '''
-    thread = Thread(target=handle, args=(connection,),
+    socketcopy = connection.dup()
+    thread = Thread(target=handle, args=(socketcopy,),
                     name=nonce, daemon=False)
     thread.start()
+    connection.close()
 
 def handle(connection):
     '''
