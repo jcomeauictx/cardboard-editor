@@ -11,7 +11,7 @@ window.onload = function() {
     // Connect to local server
     const server = new URLSearchParams(location.search).get("wsserver") ||
         location.host;
-    const url = "ws:" + server + "/";
+    const url = "ws://" + server + "/";
     const websocket = new WebSocket(url);
     const responses = ["foo", "bar", "baz"];
     const display = document.getElementById("log-window");
