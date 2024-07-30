@@ -101,10 +101,10 @@ def launch_websocket(nonce, connection):
     `send`, when called with a dup'd connection (as from server.py).
     '''
     socketcopy = connection.dup()
+    connection.close()
     thread = Thread(target=handle, args=(socketcopy,),
                     name=nonce, daemon=False)
     thread.start()
-    connection.close()
 
 def handle(connection):
     '''
