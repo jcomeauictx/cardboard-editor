@@ -103,7 +103,7 @@ def launch_websocket(nonce, connection):
     socketcopy = connection.dup()
     connection.close()
     thread = Thread(target=handle, args=(socketcopy,),
-                    name=nonce, daemon=False)
+                    name=nonce, daemon=True)
     thread.start()
 
 def handle(connection):
