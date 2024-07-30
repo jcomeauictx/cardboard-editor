@@ -60,6 +60,11 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
             self.send_header('Sec-WebSocket-Accept', create_key(nonce).decode())
             self.end_headers()
             # removing following gives BrokenPipeError: [Errno 32] Broken pipe
+            # (it happens a lot of the time anyway, but rarely the client sees
+            #  a single 'foo' packet and responds 'bar'. the server doesn't
+            #  see the response, but it closes normally with
+            #  INFO:root:remote end closed: remote end closed unexpectedly
+            #  instead of an exception)
             self.wfile.flush()
             # removing .dup() gives OSError: [Errno 9] Bad file descriptor
             connection = self.connection.dup()
