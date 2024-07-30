@@ -59,7 +59,9 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
             self.send_header('Connection', 'Upgrade')
             self.send_header('Sec-WebSocket-Accept', create_key(nonce).decode())
             self.end_headers()
+            # removing following gives BrokenPipeError: [Errno 32] Broken pipe
             self.wfile.flush()
+            # removing .dup() gives OSError: [Errno 9] Bad file descriptor
             connection = self.connection.dup()
             logging.debug('socket just before launch_websocket: %s', connection)
             launch_websocket(nonce.decode(), connection)
