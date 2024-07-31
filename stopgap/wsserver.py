@@ -48,6 +48,8 @@ RESPONSE = (
     b'Sec-WebSocket-Accept: %s\r\n'
     b'\r\n'
 )
+# get `uname -r` in case we need to do something special for iSH (-ish)
+OS_RELEASE = os.uname().release
 
 # pylint: disable=consider-using-f-string
 
