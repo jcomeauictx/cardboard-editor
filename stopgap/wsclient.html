@@ -28,6 +28,7 @@ window.onload = function() {
     };
     const log = function(message, end=true) {
         display.value += message;
+        console.debug("logging \"" + message + "\" to screen");
         if (end) {
             display.value += "\r\n";
             console.debug("scroll height: " + display.scrollHeight +
@@ -44,31 +45,28 @@ window.onload = function() {
             if (display.scrollTop != 0) close(websocket, 1000, "window full");
         }
     };
-    try {
-        websocket = new WebSocket(url);
-        websocket.addEventListener("message", function(event) {
-            log("Data received: " + event.data, false);
-            messageCount++;  // do this first so response is offset by one
-            // e.g. receives "foo", responds "bar"
-            let response = responses[messageCount % responses.length];
-            websocket.send(response);
-            log(", responded: " + response);
-        });
-        websocket.addEventListener("close", function(event) {
-            log("Connection closed, code: " + event.code + ", reason: \"" +
-                event.reason + "\", was clean: " + event.wasClean);
-            log("You may close this window.");
-        });
-        websocket.addEventListener("error", function(event) {
-            log("Connection closed due to error", event);
-        });
-    } catch(error) {
-        log("WebSocket connection to \"" + url + "\" failed: " + error);
-    }
-    websocket.addEventListener("open", function(event) {
+    // try-catch doesn't work here, see stackoverflow.com/a/31003057/493161
+    websocket = new WebSocket(url);
+    websocket.onmessage = function(event) {
+        log("Data received: " + event.data, false);
+        messageCount++;  // do this first so response is offset by one
+        // e.g. receives "foo", responds "bar"
+        let response = responses[messageCount % responses.length];
+        websocket.send(response);
+        log(", responded: " + response);
+    };
+    websocket.onclose = function(event) {
+        log("Connection closed, code: " + event.code + ", reason: \"" +
+            event.reason + "\", was clean: " + event.wasClean);
+        log("You may close this window.");
+    };
+    websocket.onerror = function(event) {
+        log("Connection closed due to error", event);
+    };
+    websocket.onopen = function(event) {
         log("Connection opened to " + url);
-    });
-    console.debug("wsclient.js ready");
+    };
+    console.debug("wsclient initialized");
 };
 </script>
 <style>
