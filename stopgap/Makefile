@@ -37,9 +37,12 @@ tkinter.debug:
 	gdb $(PYTHON)
 stop: wsserver.stop httpserver.stop
 %.stop:
-	# `kill 0` avoids usage message if `pidof wsserver` returns nothing
-	# (it just kills the `kill` process itself)
-	kill $$(pidof $*) 0 || true
+	if [ $$(pidof $*) ]; then \
+	 echo killing $* >&2; \
+	 kill $$(pidof $*); \
+	else \
+	 echo $* is already not running >&2; \
+	fi
 strace.debug:
 	$(MAKE) GDB='gdb --nx --args' xtest.log
 xtest.log: xtest.py
