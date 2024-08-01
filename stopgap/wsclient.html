@@ -12,7 +12,7 @@ window.onload = function() {
     const server = new URLSearchParams(location.search).get("wsserver") ||
         location.host;
     const url = "ws://" + server + "/";
-    const websocket = new WebSocket(url);
+    let websocket = null;
     const responses = ["foo", "bar", "baz"];
     const display = document.getElementById("log-window");
     let closing = 0;
@@ -44,24 +44,29 @@ window.onload = function() {
             if (display.scrollTop != 0) close(websocket, 1000, "window full");
         }
     };
+    try {
+        websocket = new WebSocket(url);
+        websocket.addEventListener("message", function(event) {
+            log("Data received: " + event.data, false);
+            messageCount++;  // do this first so response is offset by one
+            // e.g. receives "foo", responds "bar"
+            let response = responses[messageCount % responses.length];
+            websocket.send(response);
+            log(", responded: " + response);
+        });
+        websocket.addEventListener("close", function(event) {
+            log("Connection closed, code: " + event.code + ", reason: \"" +
+                event.reason + "\", was clean: " + event.wasClean);
+            log("You may close this window.");
+        });
+        websocket.addEventListener("error", function(event) {
+            log("Connection closed due to error", event);
+        });
+    } catch(error) {
+        log("WebSocket connection to \"" + url + "\" failed: " + error);
+    }
     websocket.addEventListener("open", function(event) {
         log("Connection opened to " + url);
-    });
-    websocket.addEventListener("message", function(event) {
-        log("Data received: " + event.data, false);
-        messageCount++;  // do this first so response is offset by one
-        // e.g. receives "foo", responds "bar"
-        let response = responses[messageCount % responses.length];
-        websocket.send(response);
-        log(", responded: " + response);
-    });
-    websocket.addEventListener("close", function(event) {
-        log("Connection closed, code: " + event.code + ", reason: \"" +
-            event.reason + "\", was clean: " + event.wasClean);
-        log("You may close this window.");
-    });
-    websocket.addEventListener("error", function(event) {
-        log("Connection closed due to error", event);
     });
     console.debug("wsclient.js ready");
 };
