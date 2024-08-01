@@ -27,7 +27,7 @@ SCRIPTS := $(wildcard *.py)
 ifneq ($(SHOWENV),)
 	export
 endif
-all: serve
+all: httpserver
 xtest: xtest.py
 	$(PYTHON) $<
 debug: tkinter.debug
@@ -49,25 +49,26 @@ strace.debug:
 	$(MAKE) GDB='gdb --nx --args' xtest.log
 xtest.log: xtest.py
 	$(GDB) strace -f -v -o $@ -s 512 $(PYTHON) $<
-serve: $(HTTPSERVER)
+httpserver: $(HTTPSERVER)
 	# check for port in use before starting
 	# https://stackoverflow.com/a/77400250/493161
 	# NOTE that these return true (0) if port in use and false (1) if not
 	# so we need to invert the status with `!` to force an error
 	! lsof -itcp:8000
 	! fuser 8000/tcp
-	$(PYTHON) $< &
+	exec -a $@ $(PYTHON) $< || true &
 	#sleep 1  # give server a chance to start before launching browser
 	# (above `sleep` commented out because SO_REUSEADDR option fixed it)
 	-$(BROWSE) "$(URL)" >&2
 	# prevent server stopping in case browser goes to background
 	read -p '<ENTER> when done: '
 	$(MAKE) $(HTTPSERVER_PORT).stop
-wsserve: $(WSSERVER)
-	# check for port in use before starting, see notes under `serve:`
+wsserver: $(WSSERVER)
+	# check for port in use before starting, see notes under `httpserver:`
 	! lsof -itcp:8080
 	! fuser 8080/tcp
-	$(PYTHON) $< &
+	exec -a $@ $(PYTHON) $< || true &
+	@echo wsserver launched
 env:
 ifneq ($(SHOWENV),)
 	$@
@@ -75,11 +76,11 @@ else
 	$(MAKE) SHOWENV=1 $@
 endif
 wstest:
-	$(MAKE) wsserve
-	$(MAKE) SERVER=WSSERVER WSQUERY="?wsserver=$(WSSERVER_HOST)" serve
+	$(MAKE) wsserver
+	$(MAKE) SERVER=WSSERVER WSQUERY="?wsserver=$(WSSERVER_HOST)" httpserver
 	$(MAKE) $(WSSERVER_PORT).stop
 wstest.new:
-	$(MAKE) SERVER=WSSERVER serve
+	$(MAKE) SERVER=WSSERVER httpserver
 %.pylint: %.py
 	$(PYLINT) $<
 pylint: $(SCRIPTS:.py=.pylint)
