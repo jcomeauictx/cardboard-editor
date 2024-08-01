@@ -52,6 +52,7 @@ window.onload = function() {
         messageCount++;  // do this first so response is offset by one
         // e.g. receives "foo", responds "bar"
         let response = responses[messageCount % responses.length];
+        console.debug("attempting to send response: " + response);
         websocket.send(response);
         log(", responded: " + response);
     };
