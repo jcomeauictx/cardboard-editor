@@ -37,7 +37,7 @@ tkinter.debug:
 	gdb $(PYTHON)
 stop: wsserver.stop httpserver.stop
 %.stop:
-	if [ $$(pidof $*) ]; then \
+	if [ "$$(pidof $*)" ]; then \
 	 echo killing $* >&2; \
 	 kill $$(pidof $*); \
 	else \
