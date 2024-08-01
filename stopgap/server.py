@@ -52,6 +52,13 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
             return None
         if 'Sec-WebSocket-Key' in self.headers:
             logging.debug('websocket request received')
+            if os.getenv('FORCE_WS_ERROR'):  # `make FORCE_WS_ERROR=1`
+                logging.debug('pretending not to recognize WS request')
+                self.send_response(HTTPStatus.NOT_IMPLEMENTED,
+                                   'Pretending not to recognize, for debugging'
+                )
+                self.end_headers()
+                return None
             nonce = self.headers['Sec-WebSocket-Key'].encode()
             self.send_response(HTTPStatus.SWITCHING_PROTOCOLS,
                                'Switching Protocols')
