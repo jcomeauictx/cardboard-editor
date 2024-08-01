@@ -19,11 +19,11 @@ window.onload = function() {
     let messageCount = 0;
     const close = function(socket, code, reason) {
         if (++closing == 1) {
-            console.debug("requesting server to stop");
+            console.info("requesting server to stop");
             socket.send("stop");
             window.setTimeout(function() {socket.close(code, reason);}, 3000);
         } else {
-            console.debug("waiting for connection to close");
+            console.info("waiting for connection to close");
         }
     };
     const log = function(message, end=true) {
@@ -67,7 +67,7 @@ window.onload = function() {
     websocket.onopen = function(event) {
         log("Connection opened to " + url);
     };
-    console.debug("wsclient initialized");
+    console.info("wsclient initialized");
 };
 </script>
 <style>
