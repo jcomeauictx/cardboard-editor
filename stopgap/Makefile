@@ -35,16 +35,11 @@ tkinter.debug:
 	@echo .gdbinit will run xtest.py >&2
 	@echo '`bt` for backtrace after segfault' >&2
 	gdb $(PYTHON)
-stop: $(WSSERVER_PORT).stop $(HTTPSERVER_PORT).stop
+stop: wsserver.stop httpserver.stop
 %.stop:
-	pid=$$(lsof -t -itcp@$(LOCAL):$* -s tcp:listen); \
-        if [ "$$pid" ]; then \
-	 echo Stopping server on $(LOCAL):$* >&2; \
-         kill $$pid; \
-	 sleep 1; \
-        else \
-         echo Nothing to stop: no server on port $* >&2; \
-        fi
+	# `kill 0` avoids usage message if `pidof wsserver` returns nothing
+	# (it just kills the `kill` process itself)
+	kill $$(pidof $*) 0 || true
 strace.debug:
 	$(MAKE) GDB='gdb --nx --args' xtest.log
 xtest.log: xtest.py
@@ -62,7 +57,7 @@ httpserver: $(HTTPSERVER)
 	-$(BROWSE) "$(URL)" >&2
 	# prevent server stopping in case browser goes to background
 	read -p '<ENTER> when done: '
-	$(MAKE) $(HTTPSERVER_PORT).stop
+	$(MAKE) $@.stop
 wsserver: $(WSSERVER)
 	# check for port in use before starting, see notes under `httpserver:`
 	! lsof -itcp:8080
@@ -78,7 +73,7 @@ endif
 wstest:
 	$(MAKE) wsserver
 	$(MAKE) SERVER=WSSERVER WSQUERY="?wsserver=$(WSSERVER_HOST)" httpserver
-	$(MAKE) $(WSSERVER_PORT).stop
+	$(MAKE) wsserver.stop
 wstest.new:
 	$(MAKE) SERVER=WSSERVER httpserver
 %.pylint: %.py
