@@ -28,6 +28,8 @@ PYLINT ?= $(shell which pylint pylint3 true 2>/dev/null | head -n 1)
 SCRIPTS := $(wildcard *.py)
 ifneq ($(SHOWENV),)
 	export
+else
+	export LOCAL
 endif
 all: httpserver
 xtest: xtest.py
