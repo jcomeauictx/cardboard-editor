@@ -5,7 +5,7 @@ window.addEventListener("load", function() {
         } catch (error) {
             console.debug("could not use element.replaceChildren(): " + error);
             console.debug("using older, slower method to replace child nodes");
-            while (element.lastChild) element.removeChild(element.lastChild);
+            while (element.lastChild) {element.removeChild(element.lastChild);}
             for (let i = 0; i < newChildren.length; i++) {
                 console.debug("appending " + newChildren[i] + " to " + element);
                 element.appendChild(newChildren[i]);
@@ -86,16 +86,30 @@ window.addEventListener("load", function() {
         ]);
     };
     document.body.addEventListener("keydown", function(event) {
-        if (hasFocus != editWindow) {
-            console.debug("key pressed:", event.key);
-            if (event.altKey || event.ctrlKey || event.metaKey) {
-                console.debug(
-                    "ignoring keydown with alt, ctrl, or meta modifiers"
-                );
-            } else if (event.key.length == 1) {
-                deleteSelected();
-                insertString(event.key);
+        // only process the events after they've been sent over webSocket
+        if (event.altKey || event.ctrlKey || event.metaKey) {
+            console.debug(
+                "ignoring keydown with alt, ctrl, or meta modifiers"
+            );
+            return false;  // stop propagation and default action
+        }
+        var key = event.key
+        if (event.tunneled) {  // already been through webSocket
+            if (hasFocus != editWindow) {
+                console.debug("key pressed: '" + key + "'");
+                } else if (key.length == 1) {
+                    deleteSelected();
+                    insertString(key);
+                } else {
+                    console.debug("don't know what to do with '" + key + "'");
+                }
+            } else {
+                console.debug("letting editWindow handle keypress");
             }
+        } else {
+            console.debug("sending key '" + key + "' through webSocket tunnel");
+            webSocket.send(key);
+            return false;  // stop propagation and default action
         }
     });
     document.body.addEventListener("keyup", function(event) {
@@ -110,10 +124,10 @@ window.addEventListener("load", function() {
             console.debug("ignoring keypress while edit window has focus");
         }
     });
-    const sendKey = function(key) {
-        const event = new KeyboardEvent("keydown", {key: key});
-        console.log("sending key '" + key + "'");
-        webSocket.send(key);
+    const sendKey = function(key=key, tunneled=false) {
+        const event = new KeyboardEvent(
+            "keydown", {key: key, tunneled: tunneled}
+        );
         document.body.dispatchEvent(event);
     };
     const softKey = function(event) {
