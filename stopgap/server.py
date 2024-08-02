@@ -60,8 +60,8 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
                 self.end_headers()
                 return None
             nonce = self.headers['Sec-WebSocket-Key'].encode()
-            self.send_response(HTTPStatus.SWITCHING_PROTOCOLS,
-                               'Switching Protocols')
+            self.send_response_only(HTTPStatus.SWITCHING_PROTOCOLS,
+                                    'Switching Protocols')
             self.send_header('Upgrade', 'websocket')
             self.send_header('Connection', 'Upgrade')
             self.send_header('Sec-WebSocket-Accept', create_key(nonce).decode())
@@ -100,7 +100,8 @@ def dispatch(path):
         keepalive = Thread(target=background, daemon=True)
         keepalive.start()
         try:
-            serve(HandlerClass=WebSocketHandler, bind=ADDRESS, port=PORT)
+            serve(HandlerClass=WebSocketHandler, bind=ADDRESS,
+                  protocol='HTTP/1.1', port=PORT)
         finally:  # KeyboardInterrupt already trapped and sys.exit() called
             threads = threading_enumerate()
             logging.debug('threads: %s', threads)
