@@ -66,7 +66,9 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
             self.send_header('Connection', 'Upgrade')
             self.send_header('Sec-WebSocket-Accept', create_key(nonce).decode())
             self.end_headers()
-            self.close_connection = True  # disable keep-alive
+            # disable keep-alive from this point
+            # pylint: disable=attribute-defined-outside-init
+            self.close_connection = True
             logging.debug('sent upgrade response')
             logging.debug('socket before launch_websocket: %s', self.connection)
             launch_websocket(nonce.decode(), self.connection)
