@@ -17,6 +17,7 @@ window.addEventListener("load", function() {
     const background = document.getElementById("background");
     const fakeCaret = document.getElementById("fake-caret");
     const keyboard = document.getElementById("keyboard");
+    let webSocket = null;  // set this up later
     fakeCaret.parentNode.removeChild(fakeCaret);  // remove from DOM
     let styles = ["padding", "borderWidth", "borderStyle",
                   "margin", "lineHeight"];
@@ -112,6 +113,7 @@ window.addEventListener("load", function() {
     const sendKey = function(key) {
         const event = new KeyboardEvent("keydown", {key: key});
         console.log("sending key '" + key + "'");
+        webSocket.send(key);
         document.body.dispatchEvent(event);
     };
     const softKey = function(event) {
@@ -131,6 +133,25 @@ window.addEventListener("load", function() {
     leftSquareBracket.addEventListener("click", function(event) {
         softKey(event);
     });
+    // all interaction with server henceforth will be over a WebSocket
+    // try-catch doesn't work here, see stackoverflow.com/a/31003057/493161
+    webSocket = new WebSocket("ws://" + location.host);
+    webSocket.onmessage = function(event) {
+        console.debug("Data received: " + event.data);
+    };
+    webSocket.onclose = function(event) {
+        console.debug("Connection closed, code: " +
+            event.code + ", reason: \"" +
+            event.reason + "\", was clean: " + event.wasClean);
+        console.debug("You may close this window.");
+    };
+    webSocket.onerror = function(event) {
+        console.warn("Connection closed due to error", event);
+    };
+    webSocket.onopen = function(event) {
+        console.info("Connection opened to " + url);
+    };
+    console.info("WebSocket connection initialized");
 }, false);
 console.log("stopgap.js loaded");
 // vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
