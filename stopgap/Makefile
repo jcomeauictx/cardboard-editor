@@ -1,6 +1,7 @@
 SHELL := /bin/bash
-BROWSER ?= chromium
-ifeq ($(BROWSER),chomium)
+CHROME ?= $(shell which chromium chrome echo 2>/dev/null | head -n 1)
+BROWSER ?= $(CHROME)
+ifeq ($(BROWSER),$(CHROME))
 	BROWSE := $(BROWSER) --temp-profile
 else ifeq ($(BROWSER),firefox)
 	BROWSE := $(BROWSER) --private-window
