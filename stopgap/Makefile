@@ -8,7 +8,8 @@ else ifeq ($(BROWSER),firefox)
 else
 	BROWSE := $(BROWSER)
 endif
-LOCAL := 127.0.0.1
+# run linux-wifi-hotspot to make this address work; otherwise use 127.0.0.1
+LOCAL ?= 192.168.12.1
 HTTPSERVER := server.py
 HTTPSERVER_PORT := 8000
 HTTPSERVER_HOST := $(LOCAL):$(HTTPSERVER_PORT)
