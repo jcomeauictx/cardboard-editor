@@ -5,7 +5,7 @@ window.addEventListener("load", function() {
         } catch (error) {
             console.debug("could not use element.replaceChildren(): " + error);
             console.debug("using older, slower method to replace child nodes");
-            while (element.lastChild) {element.removeChild(element.lastChild);}
+            while (element.lastChild) element.removeChild(element.lastChild);
             for (let i = 0; i < newChildren.length; i++) {
                 console.debug("appending " + newChildren[i] + " to " + element);
                 element.appendChild(newChildren[i]);
@@ -87,6 +87,7 @@ window.addEventListener("load", function() {
     };
     document.body.addEventListener("keydown", function(event) {
         // only process the events after they've been sent over webSocket
+        console.debug("processing keydown event");
         if (event.altKey || event.ctrlKey || event.metaKey) {
             console.debug(
                 "ignoring keydown with alt, ctrl, or meta modifiers"
@@ -95,9 +96,10 @@ window.addEventListener("load", function() {
         }
         var key = event.key
         if (event.tunneled) {  // already been through webSocket
+            console.debug("key pressed: '" + key + "'");
             if (hasFocus != editWindow) {
-                console.debug("key pressed: '" + key + "'");
-                } else if (key.length == 1) {
+                console.debug("editing background");
+                if (key.length == 1) {
                     deleteSelected();
                     insertString(key);
                 } else {
@@ -163,7 +165,7 @@ window.addEventListener("load", function() {
         console.warn("Connection closed due to error", event);
     };
     webSocket.onopen = function(event) {
-        console.info("Connection opened to " + url);
+        console.info("Connection opened to " + location.host);
     };
     console.info("WebSocket connection initialized");
 }, false);
