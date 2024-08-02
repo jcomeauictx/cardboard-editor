@@ -101,7 +101,7 @@ def dispatch(path):
         keepalive.start()
         try:
             serve(HandlerClass=WebSocketHandler, bind=ADDRESS,
-                  protocol='HTTP/1.1', port=PORT)
+                  protocol='HTTP/1.0', port=PORT)
         finally:  # KeyboardInterrupt already trapped and sys.exit() called
             threads = threading_enumerate()
             logging.debug('threads: %s', threads)
