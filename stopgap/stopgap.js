@@ -166,6 +166,7 @@ window.addEventListener("load", function() {
     };
     webSocket.onopen = function(event) {
         console.info("Connection opened to " + location.host);
+        webSocket.send("stopgap editor");
     };
     console.info("WebSocket connection initialized");
 }, false);

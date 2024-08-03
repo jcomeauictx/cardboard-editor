@@ -12,6 +12,8 @@ from wsserver import create_key, launch_websocket, package, MAXPACKET, FIN, \
 
 ADDRESS = os.getenv('LOCAL') or '127.0.0.1'
 PORT = os.getenv('PORT') or 8000
+KEYS = [chr(n).encode() for n in range(32, 127)]
+CLIENTS = set()
 
 # pylint: disable=consider-using-f-string
 
@@ -127,13 +129,7 @@ def handler(connection):
                 for i in range(payload_size):
                     payload[i] = payload[i] ^ masking_key[i % 4]
                 logging.info('payload: %s', payload)
-                if payload == b'stop':
-                    connection.send(package(
-                        CLOSE.to_bytes(2, 'big') +
-                            b"server closed on client's request",
-                        'close')
-                    )
-                elif opcode == 'close':
+                if opcode == 'close':
                     code, reason = (
                         int.from_bytes(payload[:2], 'big'),
                         payload[2:]
@@ -141,6 +137,19 @@ def handler(connection):
                     logging.warning('client closed connection: %d, %s',
                                     code, reason)
                     raise StopIteration('remote end initiated closure')
+                if payload == b'stop':
+                    connection.send(package(
+                        CLOSE.to_bytes(2, 'big') +
+                            b"server closed on client's request",
+                        'close')
+                    )
+                elif payload == b'stopgap editor':
+                    logging.info('stopgap editor found at %s', connection)
+                    CLIENTS.add(connection)
+                elif payload in KEYS:
+                    for client in CLIENTS:
+                        logging.debug("sending key %r to %s", payload, client)
+                        client.send(package(payload))
             elif not packet:
                 raise StopIteration('remote end closed unexpectedly')
             else:
