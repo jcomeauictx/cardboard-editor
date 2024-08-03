@@ -95,18 +95,17 @@ window.addEventListener("load", function() {
             return false;  // stop propagation and default action
         }
         var key = event.key
-        if (event.code == "tunneled") {  // already been through webSocket
+        if (event.code.startsWith("tunneled")) {  // been through webSocket
             console.debug("tunneled key: '" + key + "'");
-            if (hasFocus != editWindow) {
-                console.debug("editing background");
-                if (key.length == 1) {
-                    deleteSelected();
-                    insertString(key);
-                } else {
-                    console.debug("don't know what to do with '" + key + "'");
-                }
+            if (hasFocus == editWindow) {
+                background.focus();
+            }
+            console.debug("editing background");
+            if (key.length == 1) {
+                deleteSelected();
+                insertString(key);
             } else {
-                console.debug("letting editWindow handle keypress");
+                console.debug("don't know what to do with '" + key + "'");
             }
         } else {
             console.debug("sending key '" + key + "' through webSocket tunnel");
