@@ -189,7 +189,7 @@ def dispatch(path):
     '''
     command = httppath.splitext(httppath.split(path)[1])[0]
     logging.debug('command: %s', command)
-    if command == 'server':
+    if command == 'stopgap':
         logging.debug('launching HTTP server')
         keepalive = Thread(target=background, daemon=True)
         keepalive.start()
