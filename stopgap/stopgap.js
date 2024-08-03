@@ -18,6 +18,7 @@ window.addEventListener("load", function() {
     const fakeCaret = document.getElementById("fake-caret");
     const keyboard = document.getElementById("keyboard");
     let webSocket = null;  // set this up later
+    let serialNumber = 0;  // unique number for every keyhit
     fakeCaret.parentNode.removeChild(fakeCaret);  // remove from DOM
     let styles = ["padding", "borderWidth", "borderStyle",
                   "margin", "lineHeight"];
@@ -87,15 +88,16 @@ window.addEventListener("load", function() {
     };
     document.body.addEventListener("keydown", function(event) {
         // only process the events after they've been sent over webSocket
-        console.debug("processing keydown event, tunneled: " + event.code);
+        console.debug("processing keydown event: " + event.code);
         if (event.altKey || event.ctrlKey || event.metaKey) {
             console.debug(
                 "ignoring keydown with alt, ctrl, or meta modifiers"
             );
             return false;  // stop propagation and default action
         }
-        var key = event.key
-        if (event.code.startsWith("tunneled")) {  // been through webSocket
+        var tunneled, keySerial, key = event.key, code = event.code;
+        [tunneled, keySerial] = code.split(":");
+        if (tunneled == "tunneled") {  // been through webSocket
             console.debug("tunneled key: '" + key + "'");
             if (hasFocus != editWindow) {
                 console.debug("editing background");
@@ -106,7 +108,7 @@ window.addEventListener("load", function() {
                     console.debug("don't know what to do with '" + key + "'");
                 }
             } else {
-                console.debug("letting editWindow handle keypress");
+                console.debug("editWindow may already have handled keypress");
             }
         } else {
             console.debug("sending key '" + key + "' through webSocket tunnel");
@@ -156,7 +158,7 @@ window.addEventListener("load", function() {
     webSocket.onmessage = function(event) {
         key = event.data;
         console.debug("Data received: " + key);
-        sendKey(key, "tunneled");
+        sendKey(key, ["tunneled", serialNumber++].join(":"));
     };
     webSocket.onclose = function(event) {
         console.debug("Connection closed, code: " +
