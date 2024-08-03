@@ -82,7 +82,7 @@ def serve(address=ADDRESS, port=PORT):
             response = RESPONSE % create_key(nonce)
             sent = connection.send(response)
             logging.debug('sent response %r, %d bytes', response, sent)
-            launch_websocket(nonce.decode(), connection)
+            launch_websocket(nonce.decode(), connection, demo)
         else:
             logging.warning('ignoring packet %s', packet)
 
@@ -93,7 +93,7 @@ def create_key(nonce):
     logging.debug('found nonce: %s', nonce)
     return b64encode(sha1(nonce + MAGIC).digest())
 
-def launch_websocket(nonce, connection):
+def launch_websocket(nonce, connection, handler):
     '''
     launch thread to handle websocket
 
@@ -105,11 +105,11 @@ def launch_websocket(nonce, connection):
     '''
     socketcopy = connection.dup()
     connection.close()
-    thread = Thread(target=handle, args=(socketcopy,),
+    thread = Thread(target=handler, args=(socketcopy,),
                     name=nonce, daemon=True)
     thread.start()
 
-def handle(connection):
+def demo(connection):
     '''
     handle two-way communications with websocket client
     '''

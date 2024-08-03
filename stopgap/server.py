@@ -7,7 +7,8 @@ import posixpath as httppath
 from http.server import SimpleHTTPRequestHandler, HTTPStatus, test as serve
 from threading import Thread, enumerate as threading_enumerate
 from select import select
-from wsserver import create_key, launch_websocket
+from wsserver import create_key, launch_websocket, package, MAXPACKET, FIN, \
+    OPCODE, SUPPORTED, MASKED, PAYLOAD_SIZE, CLOSE
 
 ADDRESS = os.getenv('LOCAL') or '127.0.0.1'
 PORT = os.getenv('PORT') or 8000
@@ -71,9 +72,90 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
             self.close_connection = True
             logging.debug('sent upgrade response')
             logging.debug('socket before launch_websocket: %s', self.connection)
-            launch_websocket(nonce.decode(), self.connection)
+            launch_websocket(nonce.decode(), self.connection, handler)
             return None
         return super().send_head()
+
+def handler(connection):
+    '''
+    handle two-way communications with websocket client
+    '''
+    # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+    logging.debug('thread starting handle(%s)', connection)
+    opcode = None
+    packet = b''
+    while True: # receive keyhits and dispatch them back out to all threads
+        try:
+            logging.debug('receiving packet on %s', connection)
+            packet = packet or connection.recv(MAXPACKET)
+            offset = 0
+            if len(packet) >= 2:
+                if (packet[offset] & FIN) != FIN:
+                    logging.error('we only support unfragmented messages')
+                    raise NotImplementedError('fragments not supported')
+                if len(packet) == MAXPACKET:
+                    logging.error('large packets not supported')
+                    raise StopIteration('packet too large, cannot re-sync')
+                opcode = OPCODE[packet[offset] & 0xf]
+                logging.debug('opcode: %s', opcode)
+                if opcode not in SUPPORTED:
+                    logging.error('we only support opcodes %s', SUPPORTED)
+                    logging.error('offending opcode: %d', opcode)
+                    raise NotImplementedError('opcode not supported')
+                masked = bool(packet[offset + 1] & MASKED)
+                if not masked:
+                    logging.error('unmasked client data violates standard')
+                    raise NotImplementedError('unmasked data not supported')
+                payload_size = packet[offset + 1] & PAYLOAD_SIZE
+                if payload_size > 125:
+                    logging.error('we only support small messages')
+                    logging.error('offending size: %d', payload_size)
+                    raise ValueError('message too large')
+                offset = 2  # move to masking key
+                masking_key = packet[offset:offset + 4]
+                logging.debug('masking key: %s', masking_key)
+                offset += 4  # skip past masking key to payload
+                payload = bytearray(packet[offset:])
+                if len(payload) != payload_size:
+                    logging.error('payload unexpected size: %s', payload)
+                    logging.info('assuming we got more than one packet')
+                    # split off additional packet[s]
+                    packet = bytes(payload[payload_size:])
+                    payload = payload[:payload_size]
+                else:
+                    packet = b''
+                for i in range(payload_size):
+                    payload[i] = payload[i] ^ masking_key[i % 4]
+                logging.info('payload: %s', payload)
+                if payload == b'stop':
+                    connection.send(package(
+                        CLOSE.to_bytes(2, 'big') +
+                            b"server closed on client's request",
+                        'close')
+                    )
+                elif opcode == 'close':
+                    code, reason = (
+                        int.from_bytes(payload[:2], 'big'),
+                        payload[2:]
+                    )
+                    logging.warning('client closed connection: %d, %s',
+                                    code, reason)
+                    raise StopIteration('remote end initiated closure')
+            elif not packet:
+                raise StopIteration('remote end closed unexpectedly')
+            else:
+                raise ValueError('insufficient packet length: %d' % len(packet))
+        except (NotImplementedError, ValueError, IndexError) as error:
+            logging.error('error in processing message: %s', error)
+        except (StopIteration, ConnectionResetError, BrokenPipeError) as ended:
+            logging.info('remote end closed: %s', ended)
+            try:  # ignore failure on shutdown
+                connection.shutdown(socket.SHUT_WR)
+                connection.close()
+            finally:
+                threads = threading_enumerate()
+                logging.debug('threads remaining: %s', threads)
+                sys.exit(0)
 
 def background():
     '''
