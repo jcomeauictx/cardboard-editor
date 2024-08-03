@@ -87,7 +87,7 @@ window.addEventListener("load", function() {
     };
     document.body.addEventListener("keydown", function(event) {
         // only process the events after they've been sent over webSocket
-        console.debug("processing keydown event");
+        console.debug("processing keydown event, tunneled: " + event.location);
         if (event.altKey || event.ctrlKey || event.metaKey) {
             console.debug(
                 "ignoring keydown with alt, ctrl, or meta modifiers"
@@ -95,7 +95,7 @@ window.addEventListener("load", function() {
             return false;  // stop propagation and default action
         }
         var key = event.key
-        if (event.tunneled) {  // already been through webSocket
+        if (event.location) {  // already been through webSocket
             console.debug("key tunneled: '" + key + "'");
             if (hasFocus != editWindow) {
                 console.debug("editing background");
@@ -126,10 +126,11 @@ window.addEventListener("load", function() {
             console.debug("ignoring keypress while edit window has focus");
         }
     });
-    const sendKey = function(key=key, tunneled=false) {
+    const sendKey = function(key, tunneled="0") {
         const event = new KeyboardEvent(
-            "keydown", {key: key, tunneled: tunneled}
+            "keydown", {key: key, location: tunneled}
         );
+        console.debug("dispatching key '" + key + "', location: " + tunneled);
         document.body.dispatchEvent(event);
     };
     const softKey = function(event) {
@@ -155,7 +156,7 @@ window.addEventListener("load", function() {
     webSocket.onmessage = function(event) {
         key = event.data;
         console.debug("Data received: " + key);
-        sendKey(key, tunneled=true);
+        sendKey(key, "tunneled");
     };
     webSocket.onclose = function(event) {
         console.debug("Connection closed, code: " +
