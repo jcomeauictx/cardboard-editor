@@ -96,7 +96,7 @@ window.addEventListener("load", function() {
         }
         var key = event.key
         if (event.tunneled) {  // already been through webSocket
-            console.debug("key pressed: '" + key + "'");
+            console.debug("key tunneled: '" + key + "'");
             if (hasFocus != editWindow) {
                 console.debug("editing background");
                 if (key.length == 1) {
@@ -134,7 +134,7 @@ window.addEventListener("load", function() {
     };
     const softKey = function(event) {
         const key = event.target.firstChild.textContent;
-        console.debug("key", key, "pressed");
+        console.debug("softKey", key, "pressed");
         sendKey(key);
     };
     const escKey = document.createElement("button");
@@ -153,7 +153,9 @@ window.addEventListener("load", function() {
     // try-catch doesn't work here, see stackoverflow.com/a/31003057/493161
     webSocket = new WebSocket("ws://" + location.host);
     webSocket.onmessage = function(event) {
-        console.debug("Data received: " + event.data);
+        key = event.data;
+        console.debug("Data received: " + key);
+        sendKey(key, tunneled=true);
     };
     webSocket.onclose = function(event) {
         console.debug("Connection closed, code: " +
