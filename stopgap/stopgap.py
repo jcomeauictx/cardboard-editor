@@ -87,12 +87,14 @@ def handler(connection):
     logging.debug('thread starting handle(%s)', connection)
     opcode = None
     packet = b''
+    serial = 0  # serial number for keyhits
     # pylint: disable=too-many-nested-blocks
     while True: # receive keyhits and dispatch them back out to all threads
         try:
             logging.debug('receiving packet on %s', connection)
             packet = packet or connection.recv(MAXPACKET)
             offset = 0
+            serialized = None  # for joining key with serial number
             if len(packet) >= 2:
                 if (packet[offset] & FIN) != FIN:
                     logging.error('we only support unfragmented messages')
@@ -151,8 +153,10 @@ def handler(connection):
                 elif payload in KEYS:
                     for client in CLIENTS:
                         logging.debug("sending key %r to %s", payload, client)
+                        serialized = b':'.join((payload, str(serial).encode()))
+                        serial += 1
                         try:
-                            client.send(package(payload))
+                            client.send(package(serialized))
                         except OSError as broken:
                             logging.critical('failed sending to %s: %s',
                                              client, broken)
