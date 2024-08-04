@@ -14,6 +14,7 @@ ADDRESS = os.getenv('LOCAL') or '127.0.0.1'
 PORT = os.getenv('PORT') or 8000
 KEYS = [chr(n).encode() for n in range(32, 127)]
 CLIENTS = set()
+FAVICONS = ('favicon', 'apple-touch-icon')
 
 # pylint: disable=consider-using-f-string
 
@@ -46,7 +47,7 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
         handle favicon.ico and websocket requests internally
         '''
         logging.debug('WebSocketHandler.send_head() called')
-        if self.path == '/favicon.ico':
+        if httppath.basename(self.path).startswith(FAVICONS):
             logging.debug('sending fake (empty) favicon.ico')
             self.send_response(HTTPStatus.OK)
             self.send_header('Content-type', 'image/png')
@@ -86,6 +87,7 @@ def handler(connection):
     logging.debug('thread starting handle(%s)', connection)
     opcode = None
     packet = b''
+    # pylint: disable=too-many-nested-blocks
     while True: # receive keyhits and dispatch them back out to all threads
         try:
             logging.debug('receiving packet on %s', connection)
@@ -149,7 +151,12 @@ def handler(connection):
                 elif payload in KEYS:
                     for client in CLIENTS:
                         logging.debug("sending key %r to %s", payload, client)
-                        client.send(package(payload))
+                        try:
+                            client.send(package(payload))
+                        except OSError as broken:
+                            logging.critical('failed sending to %s: %s',
+                                             client, broken)
+                            raise BrokenPipeError from broken
             elif not packet:
                 raise StopIteration('remote end closed unexpectedly')
             else:
