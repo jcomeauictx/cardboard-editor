@@ -19,6 +19,7 @@ window.addEventListener("load", function() {
     const keyboard = document.getElementById("keyboard");
     let webSocket = null;  // set this up later
     let serialNumber = 0;  // unique number for every keyhit
+    const unprocessed = new Set();  // keyhit serial numbers not yet processed
     fakeCaret.parentNode.removeChild(fakeCaret);  // remove from DOM
     let styles = ["padding", "borderWidth", "borderStyle",
                   "margin", "lineHeight"];
@@ -95,8 +96,8 @@ window.addEventListener("load", function() {
             );
             return false;  // stop propagation and default action
         }
-        var tunneled, keySerial, key = event.key, code = event.code;
-        [tunneled, keySerial] = code.split(":");
+        let tunneled, serial, key = event.key, code = event.code;
+        [tunneled, serial] = code.split(":");
         if (tunneled == "tunneled") {  // been through webSocket
             console.debug("tunneled key: '" + key + "'");
             if (hasFocus != editWindow) {
@@ -107,10 +108,17 @@ window.addEventListener("load", function() {
                 } else {
                     console.debug("don't know what to do with '" + key + "'");
                 }
-            } else {
+            } else if (!unprocessed.has(serial)) {
                 console.debug("editWindow may already have handled keypress");
+            } else {
+                console.debug("need to code editWindow handling of key");
             }
         } else {
+            if (hasFocus == editWindow) {
+                serial = serialNumber++;  // not adding to unprocessed set
+                console.debug("key " + key + " serial number " + serial +
+                              " assumed to be processed by editWindow");
+            }
             console.debug("sending key '" + key + "' through webSocket tunnel");
             webSocket.send(key);
             return false;  // stop propagation and default action
@@ -156,9 +164,12 @@ window.addEventListener("load", function() {
     // try-catch doesn't work here, see stackoverflow.com/a/31003057/493161
     webSocket = new WebSocket("ws://" + location.host);
     webSocket.onmessage = function(event) {
+        let serial = null;
         key = event.data;
         console.debug("Data received: " + key);
-        sendKey(key, ["tunneled", serialNumber++].join(":"));
+        serial = serialNumber++;
+        unprocessed.add(serial);
+        sendKey(key, ["tunneled", serial].join(":"));
     };
     webSocket.onclose = function(event) {
         console.debug("Connection closed, code: " +
