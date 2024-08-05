@@ -91,7 +91,7 @@ def handler(connection):
     # pylint: disable=too-many-nested-blocks
     while True: # receive keyhits and dispatch them back out to all threads
         try:
-            logging.debug('receiving packet on %s', connection)
+            logging.debug('awaiting packet on %s', connection)
             packet = packet or connection.recv(MAXPACKET)
             offset = 0
             serialized = None  # for joining key with serial number
@@ -157,23 +157,23 @@ def handler(connection):
                         logging.warning('could not decode %r', payload)
                         continue
                     for client in CLIENTS:
-                        if client is connection and not message.echo:
+                        if client is connection and not message['echo']:
                             logging.debug('not echoing %s back to sender %s',
-                                          message.key, client)
+                                          message['key'], client)
                         else:
                             logging.debug("sending key %r to %s",
-                                          message.key, client)
+                                          message['key'], client)
                             message.pop('echo')
                             message.update({'serial': serial})
                             serialized = pack(message)
                             serial += 1
-                        try:
-                            client.send(package(serialized))
-                            client.send(package(payload))
-                        except OSError as broken:
-                            logging.critical('failed sending to %s: %s',
-                                             client, broken)
-                            raise BrokenPipeError from broken
+                            try:
+                                client.send(package(serialized))
+                                client.send(package(payload))
+                            except OSError as broken:
+                                logging.critical('failed sending to %s: %s',
+                                                 client, broken)
+                                raise BrokenPipeError from broken
             elif not packet:
                 raise StopIteration('remote end closed unexpectedly')
             else:
@@ -251,9 +251,7 @@ def pack(message_dict):
     '''
     pack message, passed as dict, into shortest possible JSON bytestring
     '''
-    message = dict(message_dict)  # copy it so other accesses still see bytes
-    message['key'] = message['key'].decode()
-    return json.dumps(message, separators=(',', ':')).encode()
+    return json.dumps(message_dict, separators=(',', ':')).encode()
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG if __debug__ else logging.INFO)
