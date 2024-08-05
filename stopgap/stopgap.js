@@ -102,7 +102,8 @@ window.addEventListener("load", function() {
             );
             return false;  // stop propagation and default action
         }
-        let tunneled, serial, key = event.key, code = event.code;
+        let tunneled = null, serial = null;
+        const key = event.key, code = event.code;
         [tunneled, serial] = code.split(":");
         if (tunneled == "tunneled") {  // been through webSocket
             console.debug("tunneled key: '" + key + "'");
