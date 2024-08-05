@@ -238,7 +238,9 @@ def pack(message_dict):
     '''
     pack message, passed as dict, into shortest possible JSON bytestring
     '''
-    return json.dumps(message_dict, separators=(',', ':'))
+    message = dict(message_dict)  # copy it so other accesses still see bytes
+    message['key'] = message['key'].decode()
+    return json.dumps(message, separators=(',', ':')).encode()
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG if __debug__ else logging.INFO)
