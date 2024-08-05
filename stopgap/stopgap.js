@@ -18,10 +18,9 @@ window.addEventListener("load", function() {
     const fakeCaret = document.getElementById("fake-caret");
     const keyboard = document.getElementById("keyboard");
     let webSocket = null;  // set this up later
-    let serialNumber = 0;  // unique number for every keyhit
     class KeyClick extends KeyboardEvent {
-        constructor(key, code="", serial=0) {
-            super("keydown", {key: key, code: code});
+        constructor(key, code, serial=0) {
+            super("keydown", {key: key, code: code || key});
             this.serial = serial;
         }
     }
@@ -102,32 +101,31 @@ window.addEventListener("load", function() {
             );
             return false;  // stop propagation and default action
         }
-        let tunneled = null, serial = null;
-        const key = event.key, code = event.code;
-        [tunneled, serial] = code.split(":");
-        if (tunneled == "tunneled") {  // been through webSocket
-            console.debug("tunneled key: '" + key + "'");
+        if (event.serial) {  // requires 1-based serial numbers
+            console.debug("tunneled key: '" + event.key + "'");
             if (hasFocus != editWindow) {
                 console.debug("editing background");
                 if (key.length == 1) {
                     deleteSelected();
-                    insertString(key);
+                    insertString(event.key);
                 } else {
-                    console.debug("don't know what to do with '" + key + "'");
+                    console.debug("don't know what to do with '" +
+                                  event.key + "'");
                 }
-            } else if (!unprocessed.has(serial)) {
+            } else if (!unprocessed.has(event.serial)) {
                 console.debug("editWindow may already have handled keypress");
             } else {
                 console.debug("need to code editWindow handling of key");
             }
         } else {
             if (hasFocus == editWindow) {
-                serial = serialNumber++;  // not adding to unprocessed set
-                console.debug("key " + key + " serial number " + serial +
+                console.debug("key " + event.key +
+                              ", code: " + event.code +
                               " assumed to be processed by editWindow");
             }
-            console.debug("sending key '" + key + "' through webSocket tunnel");
-            webSocket.send(key);
+            console.debug("sending key '" + event.key +
+                          "' through webSocket tunnel");
+            webSocket.send(event.key);
             return false;  // stop propagation and default action
         }
     });
@@ -174,7 +172,7 @@ window.addEventListener("load", function() {
         try {
             message = JSON.parse(event.data);
             unprocessed.add(message.serial);
-            sendKey(message.key, message.code, message.serial);
+            sendKey(message.key, message.code || message.key, message.serial);
         } catch (parseError) {
             console.error("unexpected message: " + parseError);
             message = event.data;
