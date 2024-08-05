@@ -27,7 +27,7 @@ window.addEventListener("load", function() {
     }
     const unprocessed = new Set();  // keyhit serial numbers not yet processed
     fakeCaret.parentNode.removeChild(fakeCaret);  // remove from DOM
-    let styles = ["padding", "borderWidth", "borderStyle",
+    const styles = ["padding", "borderWidth", "borderStyle",
                   "margin", "lineHeight"];
     styles.forEach(function(style) {
         background.style[style] = getComputedStyle(editWindow)[style];
@@ -38,7 +38,7 @@ window.addEventListener("load", function() {
     };
     let hasFocus = editWindow;
     editWindow.addEventListener("focusout", function() {
-        let editText = editWindow.value;
+        const editText = editWindow.value;
         caretPosition.start = editWindow.selectionStart;
         caretPosition.end = editWindow.selectionEnd;
         console.debug("caretPosition: ", caretPosition);
@@ -46,7 +46,7 @@ window.addEventListener("load", function() {
             document.createTextNode(editText.substring(0, caretPosition.end)),
             fakeCaret,
             document.createTextNode(editText.substring(caretPosition.end))
-        ])
+        ]);
         editWindow.value = editWindow.placeholder = "";
         hasFocus = background;
     });
@@ -66,11 +66,11 @@ window.addEventListener("load", function() {
     });
     const deleteSelected = function() {
         // assuming end is always greater than start, is this valid?!
-        let count = caretPosition.end - caretPosition.start;
+        const count = caretPosition.end - caretPosition.start;
         if (count > 0) {
             console.debug("removing", count, "characters of selected text");
             fakeCaret.parentNode.removeChild(fakeCaret);  // remove temporarily
-            let text = background.firstChild.textContent;
+            const text = background.firstChild.textContent;
             replaceChildren(background.firstChild, [
                 document.createTextNode(text.substring(0, caretPosition.start)),
                 fakeCaret,
@@ -83,9 +83,9 @@ window.addEventListener("load", function() {
         console.debug("inserting '" + string + "' at caret position");
         fakeCaret.parentNode.removeChild(fakeCaret);  // remove temporarily
         let text = background.firstChild.textContent;
-        let newStart = caretPosition.start + string.length;
+        const newStart = caretPosition.start + string.length;
         text = text.substring(0, caretPosition.start) + string +
-            text.substring(caretPosition.start)
+            text.substring(caretPosition.start);
         caretPosition.start = caretPosition.end = newStart;
         replaceChildren(background.firstChild, [
             document.createTextNode(text.substring(0, newStart)),
