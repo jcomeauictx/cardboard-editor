@@ -33,7 +33,7 @@ ifneq ($(SHOWENV),)
 else
 	export LOCAL
 endif
-all: lint httpserver
+all: stop lint httpserver
 xtest: xtest.py
 	$(PYTHON) $<
 debug: tkinter.debug
