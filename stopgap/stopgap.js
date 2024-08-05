@@ -95,6 +95,7 @@ window.addEventListener("load", function() {
     document.body.addEventListener("keydown", function(event) {
         // only process the events after they've been sent over webSocket
         console.debug("processing keydown event: " + event.code);
+        let echo = true;
         if (event.altKey || event.ctrlKey || event.metaKey) {
             console.debug(
                 "ignoring keydown with alt, ctrl, or meta modifiers"
@@ -118,14 +119,16 @@ window.addEventListener("load", function() {
                 console.debug("need to code editWindow handling of key");
             }
         } else {
+            console.debug("local key: '" + event.key + "'");
             if (hasFocus == editWindow) {
                 console.debug("key " + event.key +
                               ", code: " + event.code +
                               " assumed to be processed by editWindow");
+                echo = false;
             }
             console.debug("sending key '" + event.key +
                           "' through webSocket tunnel");
-            webSocket.send(event.key);
+            webSocket.send(JSON.stringify({key: event.key, echo: echo}));
             return false;  // stop propagation and default action
         }
     });

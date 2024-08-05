@@ -150,13 +150,26 @@ def handler(connection):
                 elif payload == b'stopgap editor':
                     logging.info('stopgap editor found at %s', connection)
                     CLIENTS.add(connection)
-                elif payload in KEYS:
+                else:
+                    try:
+                        message = json.loads(payload)
+                    except json.JSONDecodeError:
+                        logging.warning('could not decode %r', payload)
+                        continue
                     for client in CLIENTS:
-                        logging.debug("sending key %r to %s", payload, client)
-                        serialized = pack({'key': payload, 'serial': serial})
-                        serial += 1
+                        if client is connection and not message.echo:
+                            logging.debug('not echoing %s back to sender %s',
+                                          message.key, client)
+                        else:
+                            logging.debug("sending key %r to %s",
+                                          message.key, client)
+                            message.pop('echo')
+                            message.update({'serial': serial})
+                            serialized = pack(message)
+                            serial += 1
                         try:
                             client.send(package(serialized))
+                            client.send(package(payload))
                         except OSError as broken:
                             logging.critical('failed sending to %s: %s',
                                              client, broken)
