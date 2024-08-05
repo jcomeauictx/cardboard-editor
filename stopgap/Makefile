@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-CHROME ?= $(shell which chromium chrome echo 2>/dev/null | head -n 1)
+CHROME ?= $(shell which chromium chrome true | head -n 1)
 BROWSER ?= $(CHROME)
 ifeq ($(BROWSER),$(CHROME))
 	BROWSE := $(BROWSER) --temp-profile
@@ -24,14 +24,16 @@ PORT = $($(SERVER)_PORT)
 HOST = $($(SERVER)_HOST)
 URL = $($(SERVER)_URL)
 PYTHON ?= python3
-PYLINT ?= $(shell which pylint pylint3 true 2>/dev/null | head -n 1)
+PYLINT ?= $(shell which pylint pylint3 true | head -n 1)
 SCRIPTS := $(wildcard *.py)
+JSCRIPTS := $(filter-out eslint.config.js, $(wildcard *.js))
+JSLINT := $(shell which eslint jshint jslint true | head -n 1)
 ifneq ($(SHOWENV),)
 	export
 else
 	export LOCAL
 endif
-all: httpserver
+all: lint httpserver
 xtest: xtest.py
 	$(PYTHON) $<
 debug: tkinter.debug
@@ -85,4 +87,8 @@ wstest.new:
 	$(MAKE) SERVER=WSSERVER httpserver
 %.pylint: %.py
 	$(PYLINT) $<
+%.jslint: %.js
+	$(JSLINT) $<
 pylint: $(SCRIPTS:.py=.pylint)
+eslint: $(JSCRIPTS:.js=.jslint)
+lint: pylint eslint
