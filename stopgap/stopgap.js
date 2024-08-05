@@ -19,6 +19,12 @@ window.addEventListener("load", function() {
     const keyboard = document.getElementById("keyboard");
     let webSocket = null;  // set this up later
     let serialNumber = 0;  // unique number for every keyhit
+    class KeyClick extends KeyboardEvent {
+        constructor(key, code="", serial=0) {
+            super("keydown", {key: key, code: code});
+            this.serial = serial;
+        }
+    }
     const unprocessed = new Set();  // keyhit serial numbers not yet processed
     fakeCaret.parentNode.removeChild(fakeCaret);  // remove from DOM
     let styles = ["padding", "borderWidth", "borderStyle",
@@ -136,10 +142,8 @@ window.addEventListener("load", function() {
             console.debug("ignoring keypress while edit window has focus");
         }
     });
-    const sendKey = function(key, code) {
-        const event = new KeyboardEvent(
-            "keydown", {key: key, code: code}
-        );
+    const sendKey = function(key, code, serial) {
+        const event = new KeyClick(key, code, serial);
         console.debug("dispatching key '" + key + "', code: " + code);
         document.body.dispatchEvent(event);
     };
