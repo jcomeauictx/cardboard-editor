@@ -168,12 +168,16 @@ window.addEventListener("load", function() {
     // try-catch doesn't work here, see stackoverflow.com/a/31003057/493161
     webSocket = new WebSocket("ws://" + location.host);
     webSocket.onmessage = function(event) {
-        let serial = null;
-        key = event.data;
-        console.debug("Data received: " + key);
-        serial = serialNumber++;
-        unprocessed.add(serial);
-        sendKey(key, ["tunneled", serial].join(":"));
+        let message = null;
+        console.debug("Data received: " + event.data);
+        try {
+            message = JSON.parse(event.data);
+            unprocessed.add(message.serial);
+            sendKey(message.key, message.code, message.serial);
+        } catch (parseError) {
+            console.error("unexpected message: " + parseError);
+            message = event.data;
+        }
     };
     webSocket.onclose = function(event) {
         console.debug("Connection closed, code: " +

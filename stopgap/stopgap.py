@@ -2,7 +2,7 @@
 '''
 server for stopgap implementation
 '''
-import sys, os, logging, socket  # pylint: disable=multiple-imports
+import sys, os, logging, socket, json  # pylint: disable=multiple-imports
 import posixpath as httppath
 from http.server import SimpleHTTPRequestHandler, HTTPStatus, test as serve
 from threading import Thread, enumerate as threading_enumerate
@@ -153,7 +153,7 @@ def handler(connection):
                 elif payload in KEYS:
                     for client in CLIENTS:
                         logging.debug("sending key %r to %s", payload, client)
-                        serialized = b':'.join((payload, str(serial).encode()))
+                        serialized = pack({'key': payload, 'serial': serial})
                         serial += 1
                         try:
                             client.send(package(serialized))
@@ -233,6 +233,12 @@ def get_ip_address(remote='1.1.1.1', port=33434):
     except (OSError, IndexError, RuntimeError) as problem:
         logging.error('Cannot determine IP address: %s', problem)
     return address
+
+def pack(message_dict):
+    '''
+    pack message, passed as dict, into shortest possible JSON bytestring
+    '''
+    return json.dumps(message_dict, separators=(',', ':'))
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG if __debug__ else logging.INFO)
