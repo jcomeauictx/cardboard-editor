@@ -21,9 +21,8 @@ INTERFACE ?= wlp1s0  # may be wlan0 or something else entirely
 CREATE_AP := $(wildcard ../../linux-wifi-hotspot/src/scripts/create_ap)
 # use frequency band 2.4 if you are connected to Internet over 5GHz
 CREATE_AP_LOG := $(notdir $(CREATE_AP)).log
-CREATE_AP_PID := $(CREATE_AP_LOG:.log=.pid.log)
 CREATE_AP_ARGS := --freq-band 2.4 --daemon \
- --logfile $(CREATE_AP_LOG) --pidfile $(CREATE_AP_PID) \
+ --logfile $(CREATE_AP_LOG) \
  $(INTERFACE) $(INTERFACE) $(ESSID) $(KEY)
 AP_UP = $$(ip link | awk '$$2 " " $$8 " " $$9 ~ /^ap1: state UP$$/ {print}')
 HTTPSERVER := stopgap.py
@@ -59,9 +58,7 @@ tkinter.debug:
 	gdb $(PYTHON)
 stop: create_ap.stop wsserver.stop httpserver.stop
 create_ap.stop:
-	if [ -s "$(CREATE_AP_PID)" ]; then \
-	 kill $$(sudo cat $(CREATE_AP_PID)); \
-	fi
+	sudo $(CREATE_AP) --stop ap1
 %.stop:
 	if [ "$$(pidof $*)" ]; then \
 	 echo killing $* >&2; \
