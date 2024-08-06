@@ -156,6 +156,9 @@ def handler(connection):
                     except json.JSONDecodeError:
                         logging.warning('could not decode %r', payload)
                         continue
+                    # serial numbers must be nonzero, so increment first.
+                    # same key/serial number gets sent to all clients.
+                    serial += 1
                     for client in CLIENTS:
                         if client is connection and not message['echo']:
                             logging.debug('not echoing %s back to sender %s',
@@ -164,7 +167,6 @@ def handler(connection):
                             logging.debug("sending key %r to %s",
                                           message['key'], client)
                             message.pop('echo')
-                            serial += 1  # serial numbers start from 1
                             message.update({'serial': serial})
                             serialized = pack(message)
                             try:
