@@ -93,7 +93,8 @@ window.addEventListener("load", function() {
     };
     document.body.addEventListener("keydown", function(event) {
         // only process the events after they've been sent over webSocket
-        console.debug("processing keydown event: " + event.code);
+        console.debug("processing keydown event: " + event.code,
+                      ", target: " + event.target);
         let echo = true;
         if (event.altKey || event.ctrlKey || event.metaKey) {
             console.debug(
