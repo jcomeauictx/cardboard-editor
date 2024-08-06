@@ -164,9 +164,9 @@ def handler(connection):
                             logging.debug("sending key %r to %s",
                                           message['key'], client)
                             message.pop('echo')
+                            serial += 1  # serial numbers start from 1
                             message.update({'serial': serial})
                             serialized = pack(message)
-                            serial += 1
                             try:
                                 client.send(package(serialized))
                                 client.send(package(payload))

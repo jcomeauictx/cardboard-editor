@@ -19,12 +19,11 @@ window.addEventListener("load", function() {
     const keyboard = document.getElementById("keyboard");
     let webSocket = null;  // set this up later
     class KeyClick extends KeyboardEvent {
-        constructor(key, code, serial=0) {
+        constructor(key, code, serial) {
             super("keydown", {key: key, code: code || key});
             this.serial = serial;
         }
     }
-    const unprocessed = new Set();  // keyhit serial numbers not yet processed
     fakeCaret.parentNode.removeChild(fakeCaret);  // remove from DOM
     const styles = ["padding", "borderWidth", "borderStyle",
                   "margin", "lineHeight"];
@@ -113,8 +112,6 @@ window.addEventListener("load", function() {
                     console.debug("don't know what to do with '" +
                                   event.key + "'");
                 }
-            } else if (!unprocessed.has(event.serial)) {
-                console.debug("editWindow may already have handled keypress");
             } else {
                 console.debug("need to code editWindow handling of key");
             }
@@ -174,7 +171,6 @@ window.addEventListener("load", function() {
         console.debug("Data received: " + event.data);
         try {
             message = JSON.parse(event.data);
-            unprocessed.add(message.serial);
             sendKey(message.key, message.code || message.key, message.serial);
         } catch (parseError) {
             console.error("unexpected message: " + parseError);
