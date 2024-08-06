@@ -105,7 +105,7 @@ window.addEventListener("load", function() {
             console.debug("tunneled key: '" + event.key + "'");
             if (hasFocus != editWindow) {
                 console.debug("editing background");
-                if (key.length == 1) {
+                if (event.key.length == 1) {
                     deleteSelected();
                     insertString(event.key);
                 } else {

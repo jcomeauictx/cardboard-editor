@@ -169,7 +169,6 @@ def handler(connection):
                             serialized = pack(message)
                             try:
                                 client.send(package(serialized))
-                                client.send(package(payload))
                             except OSError as broken:
                                 logging.critical('failed sending to %s: %s',
                                                  client, broken)
