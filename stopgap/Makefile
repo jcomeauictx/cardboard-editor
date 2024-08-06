@@ -3,8 +3,10 @@ CHROME ?= $(shell which chromium chrome true | head -n 1)
 BROWSER ?= $(CHROME)
 GITHUB := https://github.com/jcomeauictx
 LWH := $(GITHUB)/linux-wifi-hotspot
+# set up a Chromium profile named 'stopgap' to have a stable environment
+PROFILE ?= $(shell python profile.py '' stopgap)
 ifeq ($(BROWSER),$(CHROME))
-	BROWSE := $(BROWSER) --temp-profile
+	BROWSE := $(BROWSER) --user-data-dir $(PROFILE)
 else ifeq ($(BROWSER),firefox)
 	BROWSE := $(BROWSER) --private-window
 else
