@@ -114,6 +114,7 @@ window.addEventListener("load", function() {
                 }
             } else {
                 console.debug("need to code editWindow handling of key");
+                return true;  // XXX let it bubble to editWindow?
             }
         } else {
             console.debug("local key: '" + event.key + "'");
