@@ -113,8 +113,8 @@ window.addEventListener("load", function() {
                                   event.key + "'");
                 }
             } else {
-                console.debug("need to code editWindow handling of key");
-                return true;  // XXX let it bubble to editWindow?
+                console.debug("allowing editWindow to handle the event");
+                return true;  // let it bubble to editWindow?
             }
         } else {
             console.debug("local key: '" + event.key + "'");
@@ -150,7 +150,7 @@ window.addEventListener("load", function() {
     const softKey = function(event) {
         const key = event.target.firstChild.textContent;
         console.debug("softKey", key, "pressed");
-        sendKey(key);
+        sendKey(key, key, null);
     };
     const escKey = document.createElement("button");
     escKey.style.gridColumn = escKey.style.gridRow = "1";
