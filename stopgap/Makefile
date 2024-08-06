@@ -11,20 +11,23 @@ else
 	BROWSE := $(BROWSER)
 endif
 # run linux-wifi-hotspot to make this address work; otherwise use 127.0.0.1
+# (127.0.0.1 will not work with remote of course; only for localhost testing)
 LOCAL ?= 192.168.12.1
+NET := $(LOCAL:.1=.0)
 # $(dir ($dir some/path/name)) doesn't work because `dir` leaves trailing /
 SRC := $(shell dirname $(dir $(PWD)))
 NETRC := $(HOME)/.netrc
 ESSID := $(shell awk '$$2 " " $$3 ~ /^$(LOCAL) login$$/ {print $$4}' $(NETRC))
 KEY := $(shell awk '$$2 " " $$5 ~ /^$(LOCAL) password$$/ {print $$6}' $(NETRC))
 INTERFACE ?= wlp1s0  # may be wlan0 or something else entirely
+# leave following line with a single `=` for later evaluation
+AP = $(shell ip route | awk '$$1 ~ /^$(NET)\/24$$/ {print $$3}')
 CREATE_AP := $(wildcard ../../linux-wifi-hotspot/src/scripts/create_ap)
 # use frequency band 2.4 if you are connected to Internet over 5GHz
 CREATE_AP_LOG := $(notdir $(CREATE_AP)).log
 CREATE_AP_ARGS := --freq-band 2.4 --daemon \
  --logfile $(CREATE_AP_LOG) \
  $(INTERFACE) $(INTERFACE) $(ESSID) $(KEY)
-AP_UP = $$(ip link | awk '$$2 " " $$8 " " $$9 ~ /^ap1: state UP$$/ {print}')
 HTTPSERVER := stopgap.py
 HTTPSERVER_PORT := 8000
 HTTPSERVER_HOST := $(LOCAL):$(HTTPSERVER_PORT)
@@ -58,7 +61,7 @@ tkinter.debug:
 	gdb $(PYTHON)
 stop: create_ap.stop wsserver.stop httpserver.stop
 create_ap.stop:
-	sudo $(CREATE_AP) --stop ap1
+	if [ "$(AP)" ]; then sudo $(CREATE_AP) --stop $(AP); fi
 %.stop:
 	if [ "$$(pidof $*)" ]; then \
 	 echo killing $* >&2; \
@@ -119,8 +122,8 @@ credentials:
 	 false; \
 	fi
 create_ap:
-	if [ -z "$(AP_UP)" ]; then \
+	if [ -z "$(AP)" ]; then \
 	 sudo $(CREATE_AP) $(CREATE_AP_ARGS); \
 	fi
 wait_ap:
-	while [ -z "$(AP_UP)" ]; do sleep 1; done
+	while ! ping -c 1 -W 1 $(LOCAL); do sleep 1; done
