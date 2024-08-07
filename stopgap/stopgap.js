@@ -1,17 +1,20 @@
-window.addEventListener("load", function() {
-    const replaceChildren = function(element, newChildren) {
-        try {
-            element.replaceChildren(...newChildren);
-        } catch (error) {
-            console.debug("could not use element.replaceChildren(): " + error);
-            console.debug("using older, slower method to replace child nodes");
-            while (element.lastChild) element.removeChild(element.lastChild);
-            for (let i = 0; i < newChildren.length; i++) {
-                console.debug("appending " + newChildren[i] + " to " + element);
-                element.appendChild(newChildren[i]);
-            }
+com = com || {};  // create window.com if it doesn't exist
+com.gnixl = {cardboard: {stopgap: {}}};  // namespace for the remainder
+com.gnixl.cardboard.stopgap.replaceChildren = function(element, newChildren) {
+    try {
+        element.replaceChildren(...newChildren);
+    } catch (error) {
+        console.debug("could not use element.replaceChildren(): " + error);
+        console.debug("using older, slower method to replace child nodes");
+        while (element.lastChild) element.removeChild(element.lastChild);
+        for (let i = 0; i < newChildren.length; i++) {
+            console.debug("appending " + newChildren[i] + " to " + element);
+            element.appendChild(newChildren[i]);
         }
-    };
+    }
+};
+window.addEventListener("load", function() {
+    const cgcs = com.gnixl.cardboard.stopgap;
     const editWindow = document.getElementById("edit-window");
     const placeholder = editWindow.placeholder;
     const background = document.getElementById("background");
@@ -40,7 +43,7 @@ window.addEventListener("load", function() {
         caretPosition.start = editWindow.selectionStart;
         caretPosition.end = editWindow.selectionEnd;
         console.debug("caretPosition: ", caretPosition);
-        replaceChildren(background.firstChild, [
+        cgcs.replaceChildren(background.firstChild, [
             document.createTextNode(editText.substring(0, caretPosition.end)),
             fakeCaret,
             document.createTextNode(editText.substring(caretPosition.end))
@@ -57,7 +60,7 @@ window.addEventListener("load", function() {
         }
         editWindow.value = background.innerText.replace(
             /&lt;/g, "<").replace(/&amp;/g, "&");
-        replaceChildren(background.firstChild, []);
+        cgcs.replaceChildren(background.firstChild, []);
         editWindow.selectionStart = caretPosition.start;
         editWindow.selectionEnd = caretPosition.end;
         editWindow.placeholder = placeholder;
@@ -69,7 +72,7 @@ window.addEventListener("load", function() {
             console.debug("removing", count, "characters of selected text");
             fakeCaret.parentNode.removeChild(fakeCaret);  // remove temporarily
             const text = background.firstChild.textContent;
-            replaceChildren(background.firstChild, [
+            cgcs.replaceChildren(background.firstChild, [
                 document.createTextNode(text.substring(0, caretPosition.start)),
                 fakeCaret,
                 document.createTextNode(text.substring(caretPosition.end))
@@ -85,7 +88,7 @@ window.addEventListener("load", function() {
         text = text.substring(0, caretPosition.start) + string +
             text.substring(caretPosition.start);
         caretPosition.start = caretPosition.end = newStart;
-        replaceChildren(background.firstChild, [
+        cgcs.replaceChildren(background.firstChild, [
             document.createTextNode(text.substring(0, newStart)),
             fakeCaret,
             document.createTextNode(text.substring(newStart))
