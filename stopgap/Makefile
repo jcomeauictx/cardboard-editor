@@ -1,10 +1,11 @@
 SHELL := /bin/bash
+PYTHON := python3
 CHROME ?= $(shell which chromium chrome true | head -n 1)
 BROWSER ?= $(CHROME)
 GITHUB := https://github.com/jcomeauictx
 LWH := $(GITHUB)/linux-wifi-hotspot
 # set up a Chromium profile named 'stopgap' to have a stable environment
-PROFILE ?= $(shell python profile.py '' stopgap)
+PROFILE ?= $(shell $(PYTHON) profile.py '' stopgap)
 ifeq ($(BROWSER),$(CHROME))
 	BROWSE := $(BROWSER) --user-data-dir $(PROFILE)
 else ifeq ($(BROWSER),firefox)
@@ -15,7 +16,8 @@ endif
 # run linux-wifi-hotspot to make this address work; otherwise use 127.0.0.1
 # (127.0.0.1 will not work with remote of course; only for localhost testing)
 LOCAL ?= 192.168.12.1
-NET := $(LOCAL:.1=.0)
+# since LOCAL is exported, must not use := in any assignments with it
+NET = $(LOCAL:.1=.0)
 # $(dir ($dir some/path/name)) doesn't work because `dir` leaves trailing /
 SRC := $(shell dirname $(dir $(PWD)))
 NETRC := $(HOME)/.netrc
@@ -32,18 +34,17 @@ CREATE_AP_ARGS := --freq-band 2.4 --daemon \
  $(INTERFACE) $(INTERFACE) $(ESSID) $(KEY)
 HTTPSERVER := stopgap.py
 HTTPSERVER_PORT := 8000
-HTTPSERVER_HOST := $(LOCAL):$(HTTPSERVER_PORT)
+HTTPSERVER_HOST = $(LOCAL):$(HTTPSERVER_PORT)
 HTTPSERVER_URL := http://$(HTTPSERVER_HOST)/stopgap.html
 WSSERVER := wsserver.py
 WSSERVER_PORT := 8080
-WSSERVER_HOST := $(LOCAL):$(WSSERVER_PORT)
+WSSERVER_HOST = $(LOCAL):$(WSSERVER_PORT)
 WSSERVER_URL := http://$(HTTPSERVER_HOST)/wsclient.html$(WSQUERY)
 # for next few variables, use simple `=` to evaluate at runtime
 SERVER = HTTPSERVER
 PORT = $($(SERVER)_PORT)
 HOST = $($(SERVER)_HOST)
 URL = $($(SERVER)_URL)
-PYTHON ?= python3
 PYLINT ?= $(shell which pylint pylint3 true | head -n 1)
 SCRIPTS := $(wildcard *.py)
 JSCRIPTS := $(filter-out eslint.config.js, $(wildcard *.js))
@@ -102,9 +103,9 @@ else
 	$(MAKE) SHOWENV=1 $@
 endif
 wstest:
-	$(MAKE) wsserver
-	$(MAKE) SERVER=WSSERVER WSQUERY="?wsserver=$(WSSERVER_HOST)" httpserver
-	$(MAKE) wsserver.stop
+	$(MAKE) LOCAL=127.0.0.1 wsserver
+	$(MAKE) LOCAL=127.0.0.1 SERVER=WSSERVER WSQUERY="?wsserver=$(WSSERVER_HOST)" httpserver
+	$(MAKE) LOCAL=127.0.0.1 wsserver.stop
 wstest.new:
 	$(MAKE) SERVER=WSSERVER httpserver
 %.pylint: %.py
