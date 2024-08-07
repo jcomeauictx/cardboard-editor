@@ -1,32 +1,44 @@
-com = com || {};  // create window.com if it doesn't exist
-com.gnixl = {cardboard: {stopgap: {}}};  // namespace for the remainder
-com.gnixl.cardboard.stopgap.replaceChildren = function(element, newChildren) {
-    try {
-        element.replaceChildren(...newChildren);
-    } catch (error) {
-        console.debug("could not use element.replaceChildren(): " + error);
-        console.debug("using older, slower method to replace child nodes");
-        while (element.lastChild) element.removeChild(element.lastChild);
-        for (let i = 0; i < newChildren.length; i++) {
-            console.debug("appending " + newChildren[i] + " to " + element);
-            element.appendChild(newChildren[i]);
+var com = com || {};  // create window.com if it doesn't exist
+com.gnixl = {};  // namespace
+com.gnixl.stopgap = function() {
+    const replaceChildren = function(element, newChildren) {
+        try {
+            element.replaceChildren(...newChildren);
+        } catch (error) {
+            console.debug("could not use element.replaceChildren(): " + error);
+            console.debug("using older, slower method to replace child nodes");
+            while (element.lastChild) element.removeChild(element.lastChild);
+            for (let i = 0; i < newChildren.length; i++) {
+                console.debug("appending " + newChildren[i] + " to " + element);
+                element.appendChild(newChildren[i]);
+            }
         }
-    }
-};
-window.addEventListener("load", function() {
-    const cgcs = com.gnixl.cardboard.stopgap;
-    const editWindow = document.getElementById("edit-window");
-    const placeholder = editWindow.placeholder;
-    const background = document.getElementById("background");
-    const fakeCaret = document.getElementById("fake-caret");
-    const keyboard = document.getElementById("keyboard");
-    let webSocket = null;  // set this up later
+    };
     class KeyClick extends KeyboardEvent {
         constructor(key, code, serial) {
             super("keydown", {key: key, code: code || key});
             this.serial = serial;
         }
     }
+    const sendKey = function(key, code, serial) {
+        const event = new KeyClick(key, code, serial);
+        console.debug("dispatching key '" + key + "', code: " + code);
+        document.body.dispatchEvent(event);
+    };
+    const softKey = function(event) {
+        const key = event.target.firstChild.textContent;
+        console.debug("softKey", key, "pressed");
+        sendKey(key, key, null);
+    };
+};
+window.addEventListener("load", function() {
+    const cgs = com.gnixl.stopgap;
+    const editWindow = document.getElementById("edit-window");
+    const placeholder = editWindow.placeholder;
+    const background = document.getElementById("background");
+    const fakeCaret = document.getElementById("fake-caret");
+    const keyboard = document.getElementById("keyboard");
+    let webSocket = null;  // set this up later
     fakeCaret.parentNode.removeChild(fakeCaret);  // remove from DOM
     const styles = ["padding", "borderWidth", "borderStyle",
                   "margin", "lineHeight"];
@@ -43,7 +55,7 @@ window.addEventListener("load", function() {
         caretPosition.start = editWindow.selectionStart;
         caretPosition.end = editWindow.selectionEnd;
         console.debug("caretPosition: ", caretPosition);
-        cgcs.replaceChildren(background.firstChild, [
+        cgs.replaceChildren(background.firstChild, [
             document.createTextNode(editText.substring(0, caretPosition.end)),
             fakeCaret,
             document.createTextNode(editText.substring(caretPosition.end))
@@ -60,7 +72,7 @@ window.addEventListener("load", function() {
         }
         editWindow.value = background.innerText.replace(
             /&lt;/g, "<").replace(/&amp;/g, "&");
-        cgcs.replaceChildren(background.firstChild, []);
+        cgs.replaceChildren(background.firstChild, []);
         editWindow.selectionStart = caretPosition.start;
         editWindow.selectionEnd = caretPosition.end;
         editWindow.placeholder = placeholder;
@@ -72,7 +84,7 @@ window.addEventListener("load", function() {
             console.debug("removing", count, "characters of selected text");
             fakeCaret.parentNode.removeChild(fakeCaret);  // remove temporarily
             const text = background.firstChild.textContent;
-            cgcs.replaceChildren(background.firstChild, [
+            cgs.replaceChildren(background.firstChild, [
                 document.createTextNode(text.substring(0, caretPosition.start)),
                 fakeCaret,
                 document.createTextNode(text.substring(caretPosition.end))
@@ -88,7 +100,7 @@ window.addEventListener("load", function() {
         text = text.substring(0, caretPosition.start) + string +
             text.substring(caretPosition.start);
         caretPosition.start = caretPosition.end = newStart;
-        cgcs.replaceChildren(background.firstChild, [
+        cgs.replaceChildren(background.firstChild, [
             document.createTextNode(text.substring(0, newStart)),
             fakeCaret,
             document.createTextNode(text.substring(newStart))
@@ -146,16 +158,6 @@ window.addEventListener("load", function() {
             console.debug("ignoring keypress while edit window has focus");
         }
     });
-    const sendKey = function(key, code, serial) {
-        const event = new KeyClick(key, code, serial);
-        console.debug("dispatching key '" + key + "', code: " + code);
-        document.body.dispatchEvent(event);
-    };
-    const softKey = function(event) {
-        const key = event.target.firstChild.textContent;
-        console.debug("softKey", key, "pressed");
-        sendKey(key, key, null);
-    };
     const escKey = document.createElement("button");
     escKey.style.gridColumn = escKey.style.gridRow = "1";
     escKey.appendChild(document.createTextNode("Esc"));
@@ -166,7 +168,7 @@ window.addEventListener("load", function() {
     leftSquareBracket.appendChild(document.createTextNode("["));
     keyboard.appendChild(leftSquareBracket);
     leftSquareBracket.addEventListener("click", function(event) {
-        softKey(event);
+        cgs.softKey(event);
     });
     // all interaction with server henceforth will be over a WebSocket
     // try-catch doesn't work here, see stackoverflow.com/a/31003057/493161
@@ -176,7 +178,8 @@ window.addEventListener("load", function() {
         console.debug("Data received: " + event.data);
         try {
             message = JSON.parse(event.data);
-            sendKey(message.key, message.code || message.key, message.serial);
+            cgs.sendKey(message.key, message.code || message.key,
+                        message.serial);
         } catch (parseError) {
             console.error("unexpected message: " + parseError);
             message = event.data;
