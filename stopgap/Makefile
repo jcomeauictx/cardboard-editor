@@ -7,7 +7,7 @@ LWH := $(GITHUB)/linux-wifi-hotspot
 # set up a Chromium profile named 'stopgap' to have a stable environment
 PROFILE ?= $(shell $(PYTHON) profile.py '' stopgap)
 ifeq ($(BROWSER),$(CHROME))
-	BROWSE := $(BROWSER) --user-data-dir $(PROFILE)
+	BROWSE := $(BROWSER) --profile-directory="$(PROFILE)"
 else ifeq ($(BROWSER),firefox)
 	BROWSE := $(BROWSER) --private-window
 else
@@ -54,7 +54,7 @@ ifneq ($(SHOWENV),)
 else
 	export LOCAL
 endif
-all: stop lint credentials create_ap wait_ap httpserver
+all: lint stop credentials create_ap wait_ap httpserver
 xtest: xtest.py
 	$(PYTHON) $<
 debug: tkinter.debug
@@ -89,7 +89,7 @@ httpserver: $(HTTPSERVER)
 	-$(BROWSE) "$(URL)" >&2
 	# prevent server stopping in case browser goes to background
 	read -p '<ENTER> when done: '
-	$(MAKE) $@.stop
+	$(MAKE) stop
 wsserver: $(WSSERVER)
 	# check for port in use before starting, see notes under `httpserver:`
 	! lsof -itcp:8080
@@ -118,15 +118,16 @@ lint: pylint eslint
 $(CREATE_AP):
 	@echo 'You will need to `git clone $(LWH)` to $(SRC)'
 credentials:
-	if [ -z "$(ESSID)" -o -z "$(KEY)" ]; then \
+	@if [ -z "$(ESSID)" -o -z "$(KEY)" ]; then \
 	 echo You will need to create an entry in $(NETRC): >&2; \
 	 echo '"machine $(LOCAL) login ESSID password KEY"' >&2; \
 	 echo 'choosing ESSID and KEY (password) that you can remember' >&2; \
 	 false; \
 	fi
 create_ap:
-	if [ -z "$(AP)" ]; then \
+	@echo 'Creating personal AP "$(ESSID)" for use by stopgap editor' >&2
+	@if [ -z "$(AP)" ]; then \
 	 sudo $(CREATE_AP) $(CREATE_AP_ARGS); \
 	fi
 wait_ap:
-	while ! ping -c 1 -W 1 $(LOCAL); do sleep 1; done
+	while ! ping -q -c 1 -W 1 $(LOCAL); do sleep 1; done
