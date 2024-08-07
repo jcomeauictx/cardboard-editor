@@ -1,7 +1,5 @@
-var com = com || {};  // create window.com if it doesn't exist
-com.gnixl = {};  // namespace
-com.gnixl.stopgap = {
-    replaceChildren: function(element, newChildren) {
+window.addEventListener("load", function() {
+    const replaceChildren = function(element, newChildren) {
         try {
             element.replaceChildren(...newChildren);
         } catch (error) {
@@ -13,32 +11,19 @@ com.gnixl.stopgap = {
                 element.appendChild(newChildren[i]);
             }
         }
-    },
-    KeyClick: class extends KeyboardEvent {
-        constructor(key, code, serial) {
-            super("keydown", {key: key, code: code || key});
-            this.serial = serial;
-        }
-    },
-    sendKey: function(key, code, serial) {
-        const event = new KeyClick(key, code, serial);
-        console.debug("dispatching key '" + key + "', code: " + code);
-        document.body.dispatchEvent(event);
-    },
-    softKey: function(event) {
-        const key = event.target.firstChild.textContent;
-        console.debug("softKey", key, "pressed");
-        sendKey(key, key, null);
-    },
-};
-window.addEventListener("load", function() {
-    const cgs = com.gnixl.stopgap;
+    };
     const editWindow = document.getElementById("edit-window");
     const placeholder = editWindow.placeholder;
     const background = document.getElementById("background");
     const fakeCaret = document.getElementById("fake-caret");
     const keyboard = document.getElementById("keyboard");
     let webSocket = null;  // set this up later
+    class KeyClick extends KeyboardEvent {
+        constructor(key, code, serial) {
+            super("keydown", {key: key, code: code || key});
+            this.serial = serial;
+        }
+    }
     fakeCaret.parentNode.removeChild(fakeCaret);  // remove from DOM
     const styles = ["padding", "borderWidth", "borderStyle",
                   "margin", "lineHeight"];
@@ -55,7 +40,7 @@ window.addEventListener("load", function() {
         caretPosition.start = editWindow.selectionStart;
         caretPosition.end = editWindow.selectionEnd;
         console.debug("caretPosition: ", caretPosition);
-        cgs.replaceChildren(background.firstChild, [
+        replaceChildren(background.firstChild, [
             document.createTextNode(editText.substring(0, caretPosition.end)),
             fakeCaret,
             document.createTextNode(editText.substring(caretPosition.end))
@@ -72,7 +57,7 @@ window.addEventListener("load", function() {
         }
         editWindow.value = background.innerText.replace(
             /&lt;/g, "<").replace(/&amp;/g, "&");
-        cgs.replaceChildren(background.firstChild, []);
+        replaceChildren(background.firstChild, []);
         editWindow.selectionStart = caretPosition.start;
         editWindow.selectionEnd = caretPosition.end;
         editWindow.placeholder = placeholder;
@@ -84,7 +69,7 @@ window.addEventListener("load", function() {
             console.debug("removing", count, "characters of selected text");
             fakeCaret.parentNode.removeChild(fakeCaret);  // remove temporarily
             const text = background.firstChild.textContent;
-            cgs.replaceChildren(background.firstChild, [
+            replaceChildren(background.firstChild, [
                 document.createTextNode(text.substring(0, caretPosition.start)),
                 fakeCaret,
                 document.createTextNode(text.substring(caretPosition.end))
@@ -100,7 +85,7 @@ window.addEventListener("load", function() {
         text = text.substring(0, caretPosition.start) + string +
             text.substring(caretPosition.start);
         caretPosition.start = caretPosition.end = newStart;
-        cgs.replaceChildren(background.firstChild, [
+        replaceChildren(background.firstChild, [
             document.createTextNode(text.substring(0, newStart)),
             fakeCaret,
             document.createTextNode(text.substring(newStart))
@@ -158,6 +143,16 @@ window.addEventListener("load", function() {
             console.debug("ignoring keypress while edit window has focus");
         }
     });
+    const sendKey = function(key, code, serial) {
+        const event = new KeyClick(key, code, serial);
+        console.debug("dispatching key '" + key + "', code: " + code);
+        document.body.dispatchEvent(event);
+    };
+    const softKey = function(event) {
+        const key = event.target.firstChild.textContent;
+        console.debug("softKey", key, "pressed");
+        sendKey(key, key, null);
+    };
     const escKey = document.createElement("button");
     escKey.style.gridColumn = escKey.style.gridRow = "1";
     escKey.appendChild(document.createTextNode("Esc"));
@@ -168,7 +163,7 @@ window.addEventListener("load", function() {
     leftSquareBracket.appendChild(document.createTextNode("["));
     keyboard.appendChild(leftSquareBracket);
     leftSquareBracket.addEventListener("click", function(event) {
-        cgs.softKey(event);
+        softKey(event);
     });
     // all interaction with server henceforth will be over a WebSocket
     // try-catch doesn't work here, see stackoverflow.com/a/31003057/493161
@@ -178,8 +173,7 @@ window.addEventListener("load", function() {
         console.debug("Data received: " + event.data);
         try {
             message = JSON.parse(event.data);
-            cgs.sendKey(message.key, message.code || message.key,
-                        message.serial);
+            sendKey(message.key, message.code || message.key, message.serial);
         } catch (parseError) {
             console.error("unexpected message: " + parseError);
             message = event.data;
