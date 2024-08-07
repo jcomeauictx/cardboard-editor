@@ -117,6 +117,9 @@ window.addEventListener("load", function() {
                 console.debug("allowing editWindow to handle the event");
                 return true;  // let it bubble to editWindow?
             }
+        } else if (event.body === null) {
+            console.debug("test key: '" + event.key + "'");
+            return true;  // let it bubble to editWindow?
         } else {
             console.debug("local key: '" + event.key + "'");
             if (hasFocus == editWindow) {
@@ -193,6 +196,14 @@ window.addEventListener("load", function() {
         webSocket.send("stopgap editor");
     };
     console.info("WebSocket connection initialized");
+    // XXX let's try a few things to see if we can solve the keydown problems
+    let keystroke = new KeyboardEvent('keydown', {key: '%', code: 'Key5'});
+    editWindow.focus();
+    console.debug("dispatching '%' to body");
+    document.body.dispatchEvent(keystroke);
+    keystroke = new KeyClick('5', null, null);
+    console.debug("dispatching '5' to body");
+    document.body.dispatchEvent(keystroke);
 }, false);
 console.log("stopgap.js loaded");
 // vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4

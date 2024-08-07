@@ -223,6 +223,9 @@ def dispatch(path):
         try:
             serve(HandlerClass=WebSocketHandler, bind=ADDRESS,
                   protocol='HTTP/1.1', port=PORT)
+        except OSError as failed:
+            logging.critical('cannot bind %s:%s: %s', ADDRESS, PORT, failed)
+            sys.exit(1)
         finally:  # KeyboardInterrupt already trapped and sys.exit() called
             threads = threading_enumerate()
             logging.debug('threads: %s', threads)
