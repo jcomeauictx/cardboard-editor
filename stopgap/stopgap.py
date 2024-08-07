@@ -162,19 +162,21 @@ def handler(connection):
                     echo = message.pop('echo')
                     message.update({'serial': serial})
                     serialized = pack(message)
-                    for client in CLIENTS:
+                    for client in list(CLIENTS):
                         if client is connection and not echo:
                             logging.debug('not echoing %s back to sender %s',
                                           message['key'], client)
                         else:
-                            logging.debug("sending key %r to %s",
-                                          message['key'], client)
                             try:
+                                logging.debug("sending key %r to %s",
+                                              message['key'], client)
                                 client.send(package(serialized))
                             except OSError as broken:
-                                logging.critical('failed sending to %s: %s',
-                                                 client, broken)
-                                raise BrokenPipeError from broken
+                                logging.warning(
+                                    'removing client %s after failed send: %s',
+                                    client, broken
+                                )
+                                CLIENTS.remove(client)
             elif not packet:
                 raise StopIteration('remote end closed unexpectedly')
             else:
