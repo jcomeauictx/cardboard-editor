@@ -20,7 +20,7 @@ window.addEventListener("load", function() {
     let webSocket = null;  // set this up later
     class KeyClick extends KeyboardEvent {
         constructor(key, code, serial) {
-            super("keydown", {key: key, code: code || key});
+            super("keydown", {key: key, code: code});
             this.serial = serial;
         }
     }
@@ -93,8 +93,9 @@ window.addEventListener("load", function() {
     };
     document.body.addEventListener("keydown", function(event) {
         // only process the events after they've been sent over webSocket
-        console.debug("processing keydown event: " + event.code,
-                      ", target: " + event.target);
+        console.debug("processing keydown event, key: " + event.key +
+                      ", code: " + event.code + ", serial: " + event.serial +
+                      ", target: " + event.currentTarget.tagName);
         let echo = true;
         if (event.altKey || event.ctrlKey || event.metaKey) {
             console.debug(
@@ -176,7 +177,7 @@ window.addEventListener("load", function() {
         console.debug("Data received: " + event.data);
         try {
             message = JSON.parse(event.data);
-            sendKey(message.key, message.code || message.key, message.serial);
+            sendKey(message.key, message.code, message.serial);
         } catch (parseError) {
             console.error("unexpected message: " + parseError);
             message = event.data;
