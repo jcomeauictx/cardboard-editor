@@ -81,7 +81,7 @@ httpserver: $(HTTPSERVER)
 	# https://stackoverflow.com/a/77400250/493161
 	# NOTE that these return true (0) if port in use and false (1) if not
 	# so we need to invert the status with `!` to force an error
-	! lsof -itcp:8000
+	! lsof -itcp:8000 -t -stcp:listen
 	! fuser 8000/tcp
 	exec -a $@ $(PYTHON) $< || true &
 	# give server a chance to start before launching browser
