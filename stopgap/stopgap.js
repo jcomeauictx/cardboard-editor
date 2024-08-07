@@ -1,7 +1,7 @@
 var com = com || {};  // create window.com if it doesn't exist
 com.gnixl = {};  // namespace
-com.gnixl.stopgap = function() {
-    const replaceChildren = function(element, newChildren) {
+com.gnixl.stopgap = {
+    replaceChildren: function(element, newChildren) {
         try {
             element.replaceChildren(...newChildren);
         } catch (error) {
@@ -13,23 +13,23 @@ com.gnixl.stopgap = function() {
                 element.appendChild(newChildren[i]);
             }
         }
-    };
-    class KeyClick extends KeyboardEvent {
+    },
+    KeyClick: class extends KeyboardEvent {
         constructor(key, code, serial) {
             super("keydown", {key: key, code: code || key});
             this.serial = serial;
         }
-    }
-    const sendKey = function(key, code, serial) {
+    },
+    sendKey: function(key, code, serial) {
         const event = new KeyClick(key, code, serial);
         console.debug("dispatching key '" + key + "', code: " + code);
         document.body.dispatchEvent(event);
-    };
-    const softKey = function(event) {
+    },
+    softKey: function(event) {
         const key = event.target.firstChild.textContent;
         console.debug("softKey", key, "pressed");
         sendKey(key, key, null);
-    };
+    },
 };
 window.addEventListener("load", function() {
     const cgs = com.gnixl.stopgap;
