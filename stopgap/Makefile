@@ -84,8 +84,9 @@ httpserver: $(HTTPSERVER)
 	! lsof -itcp:8000
 	! fuser 8000/tcp
 	exec -a $@ $(PYTHON) $< || true &
-	#sleep 1  # give server a chance to start before launching browser
-	# (above `sleep` commented out because SO_REUSEADDR option fixed it)
+	# give server a chance to start before launching browser
+	while ! wget --spider --quiet --output-document - \
+	 $(HTTPSERVER_URL); do sleep 1; done
 	-$(BROWSE) "$(URL)" >&2
 	# prevent server stopping in case browser goes to background
 	read -p '<ENTER> when done: '
