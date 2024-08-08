@@ -21,6 +21,7 @@ LOCAL ?= 192.168.12.1
 NET = $(LOCAL:.1=.0)
 # $(dir ($dir some/path/name)) doesn't work because `dir` leaves trailing /
 SRC := $(shell dirname $(dir $(PWD)))
+VALIDATOR ?= $(SRC)/validator/build/dist/vnu.jar
 NETRC := $(HOME)/.netrc
 ESSID := $(shell awk '$$2 " " $$3 ~ /^$(LOCAL) login$$/ {print $$4}' $(NETRC))
 KEY := $(shell awk '$$2 " " $$5 ~ /^$(LOCAL) password$$/ {print $$6}' $(NETRC))
@@ -49,8 +50,11 @@ HOST = $($(SERVER)_HOST)
 URL = $($(SERVER)_URL)
 PYLINT ?= $(shell which pylint pylint3 true | head -n 1)
 SCRIPTS := $(wildcard *.py)
+HTML := $(wildcard *.html)
+CSS := $(wildcard *.css)
 JSCRIPTS := $(filter-out eslint.config.js, $(wildcard *.js))
 JSLINT := $(shell which eslint jshint jslint true | head -n 1)
+VALIDATE := java -jar $(VALIDATOR) --Werror
 ifneq ($(SHOWENV),)
 	export
 else
@@ -115,8 +119,13 @@ wstest.new:
 	$(PYLINT) $<
 %.jslint: %.js
 	$(JSLINT) $<
+%.weblint: %.html
+	$(VALIDATE) $<
+%.weblint: %.css
+	$(VALIDATE) --css $<
 pylint: $(SCRIPTS:.py=.pylint)
 eslint: $(JSCRIPTS:.js=.jslint)
+weblint: $(HTML:.html=.weblint) $(CSS:.css=.weblint)
 lint: pylint eslint
 $(CREATE_AP):
 	@echo 'You will need to `git clone $(LWH)` to $(SRC)'
