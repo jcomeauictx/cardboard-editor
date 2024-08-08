@@ -4,6 +4,7 @@ CHROME ?= $(shell which chromium chrome true | head -n 1)
 BROWSER ?= $(CHROME)
 GITHUB := https://github.com/jcomeauictx
 LWH := $(GITHUB)/linux-wifi-hotspot
+STRACE := # comment this line out to get trace
 STRACE ?= strace -o strace.log -v -f -s256
 # set up a Chromium profile named 'stopgap' to have a stable environment
 PROFILE ?= $(shell $(PYTHON) profile.py '' stopgap)
@@ -126,7 +127,7 @@ wstest.new:
 pylint: $(SCRIPTS:.py=.pylint)
 eslint: $(JSCRIPTS:.js=.jslint)
 weblint: $(HTML:.html=.html.weblint) $(CSS:.css=.css.weblint)
-lint: pylint eslint
+lint: pylint eslint weblint
 $(CREATE_AP):
 	@echo 'You will need to `git clone $(LWH)` to $(SRC)'
 credentials:
