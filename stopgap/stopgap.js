@@ -1,4 +1,10 @@
 window.addEventListener("load", function() {
+    const phases = {
+        0: "NONE",
+        1: "CAPTURING",
+        2: "AT_TARGET",
+        3: "BUBBLING"
+    };
     const replaceChildren = function(element, newChildren) {
         try {
             element.replaceChildren(...newChildren);
@@ -95,7 +101,8 @@ window.addEventListener("load", function() {
         // only process the events after they've been sent over webSocket
         console.debug("processing keydown event, key: " + event.key +
                       ", code: " + event.code + ", serial: " + event.serial +
-                      ", target: " + event.currentTarget.tagName);
+                      ", target: " + event.currentTarget.tagName +
+                      ", eventPhase: " + phases[event.eventPhase]);
         let echo = true;
         if (event.altKey || event.ctrlKey || event.metaKey) {
             console.debug(
@@ -134,6 +141,9 @@ window.addEventListener("load", function() {
             webSocket.send(JSON.stringify({key: event.key, echo: echo}));
             return false;  // stop propagation and default action
         }
+    });
+    editWindow.addEventListener("keydown", function(event) {
+        console.debug("key '" + event.key + "' reached edit-window");
     });
     document.body.addEventListener("keyup", function(event) {
         if (hasFocus != editWindow) {
