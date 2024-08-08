@@ -4,6 +4,7 @@ CHROME ?= $(shell which chromium chrome true | head -n 1)
 BROWSER ?= $(CHROME)
 GITHUB := https://github.com/jcomeauictx
 LWH := $(GITHUB)/linux-wifi-hotspot
+STRACE ?= strace -o strace.log -v -f -s256
 # set up a Chromium profile named 'stopgap' to have a stable environment
 PROFILE ?= $(shell $(PYTHON) profile.py '' stopgap)
 ifeq ($(BROWSER),$(CHROME))
@@ -85,7 +86,7 @@ httpserver: $(HTTPSERVER)
 	! lsof -itcp:$(HTTPSERVER_PORT) -t -stcp:listen
 	! fuser $(HTTPSERVER_PORT)/tcp
 	@echo launching $< as $@... >&2
-	exec -a $@ $(PYTHON) $< || true &
+	exec -a $@ $(STRACE) $(PYTHON) $< || true &
 	# give server a chance to start before launching browser
 	while ! lsof -itcp:$(HTTPSERVER_PORT) -stcp:listen; do sleep 1; done
 	-$(BROWSE) "$(URL)" >&2
