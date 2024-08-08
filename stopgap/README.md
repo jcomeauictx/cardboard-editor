@@ -17,3 +17,4 @@ the same on Android with Chrome.
 * [inserting text into textarea](https://phuoc.ng/collection/html-dom/insert-text-into-a-text-area-at-the-current-position/)
 * Use a private network for syncing the two phones, or other devices. For linux, there is the [linux-wifi-hotspot](https://github.com/jcomeauictx/linux-wifi-hotspot)
 * Serializing keyhits on each device won't work, need to do it in the server.
+* Websocket is closing unexpectedly; need to implement ping/pong?
