@@ -55,7 +55,7 @@ ifneq ($(SHOWENV),)
 else
 	export LOCAL
 endif
-all: lint stop credentials create_ap wait_ap httpserver
+all: lint stop credentials create_ap httpserver
 xtest: xtest.py
 	$(PYTHON) $<
 debug: tkinter.debug
@@ -87,7 +87,7 @@ httpserver: $(HTTPSERVER)
 	@echo launching $< as $@... >&2
 	exec -a $@ $(PYTHON) $< || true &
 	# give server a chance to start before launching browser
-	while ! lsof -itcp:$(HTTPSERVER_PORT) -t -stcp:listen; do sleep 1; done
+	while ! lsof -itcp:$(HTTPSERVER_PORT) -stcp:listen; do sleep 1; done
 	-$(BROWSE) "$(URL)" >&2
 	# prevent server stopping in case browser goes to background
 	read -p '<ENTER> when done: '
@@ -131,5 +131,5 @@ create_ap:
 	@if [ -z "$(AP)" ]; then \
 	 sudo $(CREATE_AP) $(CREATE_AP_ARGS); \
 	fi
-wait_ap:
 	while [ -z "$$($(AP_ROUTE))" ]; do sleep 1; done
+	ip route | awk '$$1 ~ /^$(NET)\/24$$/ {print}'
