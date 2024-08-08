@@ -119,13 +119,13 @@ wstest.new:
 	$(PYLINT) $<
 %.jslint: %.js
 	$(JSLINT) $<
-%.weblint: %.html
+%.html.weblint: %.html
 	$(VALIDATE) $<
-%.weblint: %.css
+%.css.weblint: %.css
 	$(VALIDATE) --css $<
 pylint: $(SCRIPTS:.py=.pylint)
 eslint: $(JSCRIPTS:.js=.jslint)
-weblint: $(HTML:.html=.weblint) $(CSS:.css=.weblint)
+weblint: $(HTML:.html=.html.weblint) $(CSS:.css=.css.weblint)
 lint: pylint eslint
 $(CREATE_AP):
 	@echo 'You will need to `git clone $(LWH)` to $(SRC)'
