@@ -24,8 +24,9 @@ NETRC := $(HOME)/.netrc
 ESSID := $(shell awk '$$2 " " $$3 ~ /^$(LOCAL) login$$/ {print $$4}' $(NETRC))
 KEY := $(shell awk '$$2 " " $$5 ~ /^$(LOCAL) password$$/ {print $$6}' $(NETRC))
 INTERFACE ?= wlp1s0  # may be wlan0 or something else entirely
+AP_ROUTE := ip route | awk '$$1 ~ /^$(NET)\/24$$/ {print $$3}'
 # leave following line with a single `=` for later evaluation
-AP = $(shell ip route | awk '$$1 ~ /^$(NET)\/24$$/ {print $$3}')
+AP = $(shell $(AP_ROUTE))
 CREATE_AP := $(wildcard ../../linux-wifi-hotspot/src/scripts/create_ap)
 # use frequency band 2.4 if you are connected to Internet over 5GHz
 CREATE_AP_LOG := $(notdir $(CREATE_AP)).log
@@ -81,20 +82,20 @@ httpserver: $(HTTPSERVER)
 	# https://stackoverflow.com/a/77400250/493161
 	# NOTE that these return true (0) if port in use and false (1) if not
 	# so we need to invert the status with `!` to force an error
-	! lsof -itcp:8000 -t -stcp:listen
-	! fuser 8000/tcp
+	! lsof -itcp:$(HTTPSERVER_PORT) -t -stcp:listen
+	! fuser $(HTTPSERVER_PORT)/tcp
+	@echo launching $< as $@... >&2
 	exec -a $@ $(PYTHON) $< || true &
 	# give server a chance to start before launching browser
-	while ! wget --spider --quiet --output-document - \
-	 $(HTTPSERVER_URL); do sleep 1; done
+	while ! lsof -itcp:$(HTTPSERVER_PORT) -t -stcp:listen; do sleep 1; done
 	-$(BROWSE) "$(URL)" >&2
 	# prevent server stopping in case browser goes to background
 	read -p '<ENTER> when done: '
 	$(MAKE) stop
 wsserver: $(WSSERVER)
 	# check for port in use before starting, see notes under `httpserver:`
-	! lsof -itcp:8080
-	! fuser 8080/tcp
+	! lsof -itcp:$(WSSERVER_PORT)
+	! fuser $(WSSERVER_PORT)/tcp
 	exec -a $@ $(PYTHON) $< || true &
 	@echo wsserver launched
 env:
@@ -131,4 +132,4 @@ create_ap:
 	 sudo $(CREATE_AP) $(CREATE_AP_ARGS); \
 	fi
 wait_ap:
-	while ! ping -q -c 1 -W 1 $(LOCAL); do sleep 1; done
+	while [ -z "$$($(AP_ROUTE))" ]; do sleep 1; done
