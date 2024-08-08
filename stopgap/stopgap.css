@@ -13,6 +13,9 @@ body {
 	/* disable zoom on double-tap */
 	touch-action: pan-x pan-y;
 }
+form {
+	display: none;
+}
 .display {
 	height: 50%;
 	position: relative;
