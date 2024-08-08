@@ -68,11 +68,20 @@ window.addEventListener("load", function() {
         editWindow.selectionEnd = caretPosition.end;
         editWindow.placeholder = placeholder;
     });
-    const deleteSelected = function() {
-        // assuming end is always greater than start, is this valid?!
+    // it should be possible to have the textarea handle generated keyhits
+    // itself, but it refuses to do so. see
+    //https://stackoverflow.com/a/57936361/493161
+    const editWindowDeleteSelected = function() {
+        console.debug("removing any selected text from edit-window");
+        const text = editWindow.value;
+        editWindow.value = text.substring(0, editWindow.selectionStart) +
+            text.substring(editWindow.selectionEnd);
+        editWindow.selectionEnd = editWindow.selectionStart;
+    };
+    const backgroundDeleteSelected = function() {
         const count = caretPosition.end - caretPosition.start;
         if (count > 0) {
-            console.debug("removing", count, "characters of selected text");
+            console.debug("removing" + count + "characters of selected text");
             fakeCaret.parentNode.removeChild(fakeCaret);  // remove temporarily
             const text = background.firstChild.textContent;
             replaceChildren(background.firstChild, [
@@ -83,7 +92,14 @@ window.addEventListener("load", function() {
             caretPosition.end = caretPosition.start;
         }
     };
-    const insertString = function(string) {
+    const editWindowInsertString = function(string) {
+        console.debug("inserting '" + string + "' at caret position");
+        const text = editWindow.value;
+        editWindow.value = text.substring(0, editWindow.selectionStart) +
+            string + text.substring(editWindow.selectionEnd);
+        editWindow.selectionEnd = editWindow.selectionStart;
+    };
+    const backgroundInsertString = function(string) {
         console.debug("inserting '" + string + "' at caret position");
         fakeCaret.parentNode.removeChild(fakeCaret);  // remove temporarily
         let text = background.firstChild.textContent;
@@ -115,15 +131,14 @@ window.addEventListener("load", function() {
             if (hasFocus != editWindow) {
                 console.debug("editing background");
                 if (event.key.length == 1) {
-                    deleteSelected();
-                    insertString(event.key);
+                    backgroundDeleteSelected();
+                    backgroundInsertString(event.key);
                 } else {
                     console.debug("don't know what to do with '" +
                                   event.key + "'");
                 }
             } else {
-                console.debug("allowing editWindow to handle the event");
-                return true;  // let it bubble to editWindow?
+                editWindowInsertString(event.key);
             }
         } else if (event.code === "") {
             console.debug("test key: '" + event.key + "'");
