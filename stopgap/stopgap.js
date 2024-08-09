@@ -36,6 +36,9 @@ window.addEventListener("load", function() {
     styles.forEach(function(style) {
         background.style[style] = getComputedStyle(editWindow)[style];
     });
+    // textarea font size seems to be consistently smaller than background
+    // let's fix that
+    editWindow.style.fontSize = getComputedStyle(background).fontSize;
     const caretPosition = {
         start: editWindow.selectionStart,
         end: editWindow.selectionEnd
@@ -136,7 +139,10 @@ window.addEventListener("load", function() {
         }
         if (event.serial) {  // requires 1-based serial numbers
             console.debug("tunneled key: '" + event.key + "'");
-            if (hasFocus != editWindow) {
+            if (event.key in specialKeys) {
+                console.debug("processing special key " + event.key);
+                specialKeys[event.key]();
+            } else if (hasFocus != editWindow) {
                 console.debug("editing background");
                 if (event.key.length == 1) {
                     backgroundDeleteSelected();
@@ -210,6 +216,11 @@ window.addEventListener("load", function() {
     leftSquareBracket.addEventListener("click", function(event) {
         softKey(event);
     });
+    const specialKeys = {
+        Backspace: backspace
+    };
+    // set focus on editWindow so keys have a target
+    editWindow.focus();
     // all interaction with server henceforth will be over a WebSocket
     // try-catch doesn't work here, see stackoverflow.com/a/31003057/493161
     webSocket = new WebSocket("ws://" + location.host);
