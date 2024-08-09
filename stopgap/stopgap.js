@@ -92,6 +92,10 @@ window.addEventListener("load", function() {
             caretPosition.end = caretPosition.start;
         }
     };
+    const deleteSelected = function() {
+        if (hasFocus == editWindow) return editWindowDeleteSelected();
+        else return backgroundDeleteSelected();
+    };
     const editWindowInsertString = function(string) {
         console.debug("inserting '" + string + "' at caret position");
         const text = editWindow.value;
@@ -112,6 +116,10 @@ window.addEventListener("load", function() {
             fakeCaret,
             document.createTextNode(text.substring(newStart))
         ]);
+    };
+    const insertString = function(string) {
+        if (hasFocus == editWindow) return editWindowInsertString(string);
+        else return backgroundInsertString(string);
     };
     document.body.addEventListener("keydown", function(event) {
         // only process the events after they've been sent over webSocket
@@ -182,6 +190,14 @@ window.addEventListener("load", function() {
         console.debug("softKey", key, "pressed");
         sendKey(key, key, null);
     };
+    const backspace = function(event) {
+        const selected = caretPosition.end - caretPosition.start;
+        // if there is selected text already, simply remove it on backspace
+        // otherwise "select" the final character and remove it.
+        // if there's nothing there, do nothing.
+        if (selected == 0 && caretPosition.start > 0) --caretPosition.start;
+        if (caretPosition.end > 0) deleteSelected();
+    };
     const escKey = document.createElement("button");
     escKey.style.gridColumn = escKey.style.gridRow = "1";
     escKey.appendChild(document.createTextNode("Esc"));
@@ -222,9 +238,6 @@ window.addEventListener("load", function() {
         webSocket.send("stopgap editor");
     };
     console.info("WebSocket connection initialized");
-    // XXX let's try a few things to see if we can solve the keydown problems
-    editWindow.focus();
-    sendKey("5", "", null);
 }, false);
-console.log("stopgap.js loaded");
+console.info("stopgap.js loaded");
 // vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
