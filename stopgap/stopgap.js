@@ -142,17 +142,9 @@ window.addEventListener("load", function() {
             if (event.key in specialKeys) {
                 console.debug("processing special key " + event.key);
                 specialKeys[event.key]();
-            } else if (hasFocus != editWindow) {
-                console.debug("editing background");
-                if (event.key.length == 1) {
-                    backgroundDeleteSelected();
-                    backgroundInsertString(event.key);
-                } else {
-                    console.debug("don't know what to do with '" +
-                                  event.key + "'");
-                }
             } else {
-                editWindowInsertString(event.key);
+                deleteSelected();
+                insertString(event.key);
             }
         } else if (event.code === "") {
             console.debug("test key: '" + event.key + "'");
@@ -204,7 +196,9 @@ window.addEventListener("load", function() {
         if (selected == 0 && caretPosition.start > 0) --caretPosition.start;
         if (caretPosition.end > 0) deleteSelected();
     };
-    const noop = function() {};
+    const noop = function(event) {
+        console.debug("ignoring " + event.key);
+    };
     const softKeys = {
         Escape: {
             location: [1, 1],
@@ -215,6 +209,11 @@ window.addEventListener("load", function() {
             location: [3, 6],
             representation: "[",
         }
+    };
+    const endOfLine = navigator.platform.startsWith("Win") ? "\r\n" : "\n";
+    const endline = function(event) {
+        console.debug("implementing <ENTER> key");
+        insertString(endOfLine);
     };
     for (key in softKeys) {
         const button = document.createElement("button");
@@ -228,6 +227,7 @@ window.addEventListener("load", function() {
     }
     const specialKeys = {
         Backspace: backspace,
+        Enter: endline,
         Escape: noop,
         Esc: noop,
     };
