@@ -84,7 +84,7 @@ window.addEventListener("load", function() {
     const backgroundDeleteSelected = function() {
         const count = caretPosition.end - caretPosition.start;
         if (count > 0) {
-            console.debug("removing" + count + "characters of selected text");
+            console.debug("removing " + count + " characters of selected text");
             fakeCaret.parentNode.removeChild(fakeCaret);  // remove temporarily
             const text = background.firstChild.textContent;
             replaceChildren(background.firstChild, [
@@ -204,20 +204,32 @@ window.addEventListener("load", function() {
         if (selected == 0 && caretPosition.start > 0) --caretPosition.start;
         if (caretPosition.end > 0) deleteSelected();
     };
-    const escKey = document.createElement("button");
-    escKey.style.gridColumn = escKey.style.gridRow = "1";
-    escKey.appendChild(document.createTextNode("Esc"));
-    keyboard.appendChild(escKey);
-    const leftSquareBracket = document.createElement("button");
-    leftSquareBracket.style.gridColumn = "3";
-    leftSquareBracket.style.gridRow = "6";
-    leftSquareBracket.appendChild(document.createTextNode("["));
-    keyboard.appendChild(leftSquareBracket);
-    leftSquareBracket.addEventListener("click", function(event) {
-        softKey(event);
-    });
+    const noop = function() {};
+    const softKeys = {
+        Escape: {
+            location: [1, 1],
+            representation: "Esc",
+            action: noop
+        },
+        LeftSquareBracket: {
+            location: [3, 6],
+            representation: "[",
+        }
+    };
+    for (key in softKeys) {
+        const button = document.createElement("button");
+        button.style.gridColumn = softKeys[key].location[0];
+        button.style.gridRow = softKeys[key].location[1];
+        button.appendChild(
+            document.createTextNode(softKeys[key].representation || key)
+        );
+        keyboard.appendChild(button);
+        button.addEventListener("click", softKeys[key].action || softKey);
+    }
     const specialKeys = {
-        Backspace: backspace
+        Backspace: backspace,
+        Escape: noop,
+        Esc: noop,
     };
     // set focus on editWindow so keys have a target
     editWindow.focus();
