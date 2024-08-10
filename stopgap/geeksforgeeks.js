@@ -229,7 +229,7 @@ const Keyboard = {
         this.properties.capsLock =
             !this.properties.capsLock;
  
-        for (let key of this.elements.keys) {
+        for (const key of this.elements.keys) {
             if (key.childElementCount === 0) {
                 key.textContent =
                     this.properties.capsLock

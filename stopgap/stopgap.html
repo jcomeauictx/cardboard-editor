@@ -13,11 +13,10 @@
 <script src="stopgap.js"></script>
 </head>
 <body>
+<form id="required-for-textarea"></form>
 <div class="container">
   <div class="display">
-  <textarea id="edit-window"
-    autofocus
-    class="editor"
+  <textarea id="edit-window" class="editor" form="required-for-textarea"
     placeholder="(Text being edited goes here.)"></textarea>
   <div id="background" class="editor background"><pre><span
     id="fake-caret"></span></pre></div>

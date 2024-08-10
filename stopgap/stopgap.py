@@ -2,7 +2,7 @@
 '''
 server for stopgap implementation
 '''
-import sys, os, logging, socket  # pylint: disable=multiple-imports
+import sys, os, logging, socket, json  # pylint: disable=multiple-imports
 import posixpath as httppath
 from http.server import SimpleHTTPRequestHandler, HTTPStatus, test as serve
 from threading import Thread, enumerate as threading_enumerate
@@ -14,6 +14,7 @@ ADDRESS = os.getenv('LOCAL') or '127.0.0.1'
 PORT = os.getenv('PORT') or 8000
 KEYS = [chr(n).encode() for n in range(32, 127)]
 CLIENTS = set()
+FAVICONS = ('favicon', 'apple-touch-icon')
 
 # pylint: disable=consider-using-f-string
 
@@ -46,7 +47,7 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
         handle favicon.ico and websocket requests internally
         '''
         logging.debug('WebSocketHandler.send_head() called')
-        if self.path == '/favicon.ico':
+        if httppath.basename(self.path).startswith(FAVICONS):
             logging.debug('sending fake (empty) favicon.ico')
             self.send_response(HTTPStatus.OK)
             self.send_header('Content-type', 'image/png')
@@ -86,11 +87,14 @@ def handler(connection):
     logging.debug('thread starting handle(%s)', connection)
     opcode = None
     packet = b''
+    serial = 0  # serial number for keyhits
+    # pylint: disable=too-many-nested-blocks
     while True: # receive keyhits and dispatch them back out to all threads
         try:
-            logging.debug('receiving packet on %s', connection)
+            logging.debug('awaiting packet on %s', connection)
             packet = packet or connection.recv(MAXPACKET)
             offset = 0
+            serialized = None  # for joining key with serial number
             if len(packet) >= 2:
                 if (packet[offset] & FIN) != FIN:
                     logging.error('we only support unfragmented messages')
@@ -146,10 +150,33 @@ def handler(connection):
                 elif payload == b'stopgap editor':
                     logging.info('stopgap editor found at %s', connection)
                     CLIENTS.add(connection)
-                elif payload in KEYS:
-                    for client in CLIENTS:
-                        logging.debug("sending key %r to %s", payload, client)
-                        client.send(package(payload))
+                else:
+                    try:
+                        message = json.loads(payload)
+                    except json.JSONDecodeError:
+                        logging.warning('could not decode %r', payload)
+                        continue
+                    # serial numbers must be nonzero, so increment first.
+                    # same key/serial number gets sent to all clients.
+                    serial += 1
+                    echo = message.pop('echo')
+                    message.update({'serial': serial})
+                    serialized = pack(message)
+                    for client in list(CLIENTS):
+                        if client is connection and not echo:
+                            logging.debug('not echoing %s back to sender %s',
+                                          message['key'], client)
+                        else:
+                            try:
+                                logging.debug("sending key %r to %s",
+                                              message['key'], client)
+                                client.send(package(serialized))
+                            except OSError as broken:
+                                logging.warning(
+                                    'removing client %s after failed send: %s',
+                                    client, broken
+                                )
+                                CLIENTS.remove(client)
             elif not packet:
                 raise StopIteration('remote end closed unexpectedly')
             else:
@@ -196,6 +223,9 @@ def dispatch(path):
         try:
             serve(HandlerClass=WebSocketHandler, bind=ADDRESS,
                   protocol='HTTP/1.1', port=PORT)
+        except OSError as failed:
+            logging.critical('cannot bind %s:%s: %s', ADDRESS, PORT, failed)
+            sys.exit(1)
         finally:  # KeyboardInterrupt already trapped and sys.exit() called
             threads = threading_enumerate()
             logging.debug('threads: %s', threads)
@@ -222,6 +252,12 @@ def get_ip_address(remote='1.1.1.1', port=33434):
     except (OSError, IndexError, RuntimeError) as problem:
         logging.error('Cannot determine IP address: %s', problem)
     return address
+
+def pack(message_dict):
+    '''
+    pack message, passed as dict, into shortest possible JSON bytestring
+    '''
+    return json.dumps(message_dict, separators=(',', ':')).encode()
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG if __debug__ else logging.INFO)

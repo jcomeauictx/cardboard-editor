@@ -1,4 +1,10 @@
 window.addEventListener("load", function() {
+    const phases = {
+        0: "NONE",
+        1: "CAPTURING",
+        2: "AT_TARGET",
+        3: "BUBBLING"
+    };
     const replaceChildren = function(element, newChildren) {
         try {
             element.replaceChildren(...newChildren);
@@ -18,19 +24,28 @@ window.addEventListener("load", function() {
     const fakeCaret = document.getElementById("fake-caret");
     const keyboard = document.getElementById("keyboard");
     let webSocket = null;  // set this up later
+    class KeyClick extends KeyboardEvent {
+        constructor(key, code, serial) {
+            super("keydown", {key: key, code: code});
+            this.serial = serial;
+        }
+    }
     fakeCaret.parentNode.removeChild(fakeCaret);  // remove from DOM
-    let styles = ["padding", "borderWidth", "borderStyle",
+    const styles = ["padding", "borderWidth", "borderStyle",
                   "margin", "lineHeight"];
     styles.forEach(function(style) {
         background.style[style] = getComputedStyle(editWindow)[style];
     });
+    // textarea font size seems to be consistently smaller than background
+    // let's fix that
+    editWindow.style.fontSize = getComputedStyle(background).fontSize;
     const caretPosition = {
         start: editWindow.selectionStart,
         end: editWindow.selectionEnd
     };
     let hasFocus = editWindow;
     editWindow.addEventListener("focusout", function() {
-        let editText = editWindow.value;
+        const editText = editWindow.value;
         caretPosition.start = editWindow.selectionStart;
         caretPosition.end = editWindow.selectionEnd;
         console.debug("caretPosition: ", caretPosition);
@@ -38,7 +53,7 @@ window.addEventListener("load", function() {
             document.createTextNode(editText.substring(0, caretPosition.end)),
             fakeCaret,
             document.createTextNode(editText.substring(caretPosition.end))
-        ])
+        ]);
         editWindow.value = editWindow.placeholder = "";
         hasFocus = background;
     });
@@ -56,13 +71,22 @@ window.addEventListener("load", function() {
         editWindow.selectionEnd = caretPosition.end;
         editWindow.placeholder = placeholder;
     });
-    const deleteSelected = function() {
-        // assuming end is always greater than start, is this valid?!
-        let count = caretPosition.end - caretPosition.start;
+    // it should be possible to have the textarea handle generated keyhits
+    // itself, but it refuses to do so. see
+    //https://stackoverflow.com/a/57936361/493161
+    const editWindowDeleteSelected = function() {
+        console.debug("removing any selected text from edit-window");
+        const text = editWindow.value;
+        editWindow.value = text.substring(0, editWindow.selectionStart) +
+            text.substring(editWindow.selectionEnd);
+        editWindow.selectionEnd = editWindow.selectionStart;
+    };
+    const backgroundDeleteSelected = function() {
+        const count = caretPosition.end - caretPosition.start;
         if (count > 0) {
-            console.debug("removing", count, "characters of selected text");
+            console.debug("removing " + count + " characters of selected text");
             fakeCaret.parentNode.removeChild(fakeCaret);  // remove temporarily
-            let text = background.firstChild.textContent;
+            const text = background.firstChild.textContent;
             replaceChildren(background.firstChild, [
                 document.createTextNode(text.substring(0, caretPosition.start)),
                 fakeCaret,
@@ -71,13 +95,24 @@ window.addEventListener("load", function() {
             caretPosition.end = caretPosition.start;
         }
     };
-    const insertString = function(string) {
+    const deleteSelected = function() {
+        if (hasFocus == editWindow) return editWindowDeleteSelected();
+        else return backgroundDeleteSelected();
+    };
+    const editWindowInsertString = function(string) {
+        console.debug("inserting '" + string + "' at caret position");
+        const text = editWindow.value;
+        editWindow.value = text.substring(0, editWindow.selectionStart) +
+            string + text.substring(editWindow.selectionEnd);
+        editWindow.selectionEnd = editWindow.selectionStart;
+    };
+    const backgroundInsertString = function(string) {
         console.debug("inserting '" + string + "' at caret position");
         fakeCaret.parentNode.removeChild(fakeCaret);  // remove temporarily
         let text = background.firstChild.textContent;
-        let newStart = caretPosition.start + string.length;
+        const newStart = caretPosition.start + string.length;
         text = text.substring(0, caretPosition.start) + string +
-            text.substring(caretPosition.start)
+            text.substring(caretPosition.start);
         caretPosition.start = caretPosition.end = newStart;
         replaceChildren(background.firstChild, [
             document.createTextNode(text.substring(0, newStart)),
@@ -85,33 +120,51 @@ window.addEventListener("load", function() {
             document.createTextNode(text.substring(newStart))
         ]);
     };
+    const insertString = function(string) {
+        if (hasFocus == editWindow) return editWindowInsertString(string);
+        else return backgroundInsertString(string);
+    };
     document.body.addEventListener("keydown", function(event) {
         // only process the events after they've been sent over webSocket
-        console.debug("processing keydown event, tunneled: " + event.code);
+        console.debug("processing keydown event, key: " + event.key +
+                      ", code: " + event.code + ", serial: " + event.serial +
+                      ", target: " + event.currentTarget.tagName +
+                      ", eventPhase: " + phases[event.eventPhase]);
+        let echo = true;
         if (event.altKey || event.ctrlKey || event.metaKey) {
             console.debug(
                 "ignoring keydown with alt, ctrl, or meta modifiers"
             );
             return false;  // stop propagation and default action
         }
-        var key = event.key
-        if (event.code.startsWith("tunneled")) {  // been through webSocket
-            console.debug("tunneled key: '" + key + "'");
-            if (hasFocus == editWindow) {
-                background.focus();
-            }
-            console.debug("editing background");
-            if (key.length == 1) {
-                deleteSelected();
-                insertString(key);
+        if (event.serial) {  // requires 1-based serial numbers
+            console.debug("tunneled key: '" + event.key + "'");
+            if (event.key in specialKeys) {
+                console.debug("processing special key " + event.key);
+                specialKeys[event.key]();
             } else {
-                console.debug("don't know what to do with '" + key + "'");
+                deleteSelected();
+                insertString(event.key);
             }
+        } else if (event.code === "") {
+            console.debug("test key: '" + event.key + "'");
+            return true;  // let it bubble to editWindow?
         } else {
-            console.debug("sending key '" + key + "' through webSocket tunnel");
-            webSocket.send(key);
+            console.debug("local key: '" + event.key + "'");
+            if (hasFocus == editWindow) {
+                console.debug("key " + event.key +
+                              ", code: " + event.code +
+                              " assumed to be processed by editWindow");
+                echo = false;
+            }
+            console.debug("sending key '" + event.key +
+                          "' through webSocket tunnel");
+            webSocket.send(JSON.stringify({key: event.key, echo: echo}));
             return false;  // stop propagation and default action
         }
+    });
+    editWindow.addEventListener("keydown", function(event) {
+        console.debug("key '" + event.key + "' reached edit-window");
     });
     document.body.addEventListener("keyup", function(event) {
         if (hasFocus != editWindow) {
@@ -125,37 +178,74 @@ window.addEventListener("load", function() {
             console.debug("ignoring keypress while edit window has focus");
         }
     });
-    const sendKey = function(key, code) {
-        const event = new KeyboardEvent(
-            "keydown", {key: key, code: code}
-        );
+    const sendKey = function(key, code, serial) {
+        const event = new KeyClick(key, code, serial);
         console.debug("dispatching key '" + key + "', code: " + code);
         document.body.dispatchEvent(event);
     };
     const softKey = function(event) {
         const key = event.target.firstChild.textContent;
         console.debug("softKey", key, "pressed");
-        sendKey(key);
+        sendKey(key, key, null);
     };
-    const escKey = document.createElement("button");
-    escKey.style.gridColumn = escKey.style.gridRow = "1";
-    escKey.appendChild(document.createTextNode("Esc"));
-    keyboard.appendChild(escKey);
-    const leftSquareBracket = document.createElement("button");
-    leftSquareBracket.style.gridColumn = "3";
-    leftSquareBracket.style.gridRow = "6";
-    leftSquareBracket.appendChild(document.createTextNode("["));
-    keyboard.appendChild(leftSquareBracket);
-    leftSquareBracket.addEventListener("click", function(event) {
-        softKey(event);
-    });
+    const backspace = function(event) {
+        const selected = caretPosition.end - caretPosition.start;
+        // if there is selected text already, simply remove it on backspace
+        // otherwise "select" the final character and remove it.
+        // if there's nothing there, do nothing.
+        if (selected == 0 && caretPosition.start > 0) --caretPosition.start;
+        if (caretPosition.end > 0) deleteSelected();
+    };
+    const noop = function(event) {
+        console.debug("ignoring " + event.key);
+    };
+    const softKeys = {
+        Escape: {
+            location: [1, 1],
+            representation: "Esc",
+            action: noop
+        },
+        LeftSquareBracket: {
+            location: [3, 6],
+            representation: "[",
+        }
+    };
+    const endOfLine = navigator.platform.startsWith("Win") ? "\r\n" : "\n";
+    const endline = function(event) {
+        console.debug("implementing <ENTER> key");
+        insertString(endOfLine);
+    };
+    for (key in softKeys) {
+        const button = document.createElement("button");
+        button.style.gridColumn = softKeys[key].location[0];
+        button.style.gridRow = softKeys[key].location[1];
+        button.appendChild(
+            document.createTextNode(softKeys[key].representation || key)
+        );
+        keyboard.appendChild(button);
+        button.addEventListener("click", softKeys[key].action || softKey);
+    }
+    const specialKeys = {
+        Backspace: backspace,
+        Enter: endline,
+        Escape: noop,
+        Esc: noop,
+    };
+    // set focus on editWindow so keys have a target
+    editWindow.focus();
     // all interaction with server henceforth will be over a WebSocket
     // try-catch doesn't work here, see stackoverflow.com/a/31003057/493161
     webSocket = new WebSocket("ws://" + location.host);
     webSocket.onmessage = function(event) {
-        key = event.data;
-        console.debug("Data received: " + key);
-        sendKey(key, "tunneled");
+        let message = null;
+        console.debug("Data received: " + event.data);
+        try {
+            message = JSON.parse(event.data);
+            sendKey(message.key, message.code, message.serial);
+        } catch (parseError) {
+            console.error("unexpected message: " + parseError);
+            message = event.data;
+        }
     };
     webSocket.onclose = function(event) {
         console.debug("Connection closed, code: " +
@@ -172,5 +262,5 @@ window.addEventListener("load", function() {
     };
     console.info("WebSocket connection initialized");
 }, false);
-console.log("stopgap.js loaded");
+console.info("stopgap.js loaded");
 // vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
