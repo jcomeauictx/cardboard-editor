@@ -199,47 +199,51 @@ window.addEventListener("load", function() {
     const noop = function(event) {
         console.debug("ignoring " + event.key);
     };
-    const softKeys = {
-        a: {
-            location: ["1/3", "1/3"],
-            representation: "a"
+    const GKOSKeys = {
+        initial: {
+            a: {
+                location: ["1/3", "1/3"],
+                representation: "a"
+            },
+            b: {
+                location: ["1/3", "3/5"],
+                representation: "b"
+            },
+            c: {
+                location: ["1/3", "5/7"],
+                representation: "c"
+            },
+            d: {
+                location: ["5/7", "1/3"],
+                representation: "d"
+            },
+            e: {
+                location: ["5/7", "3/5"],
+                representation: "e"
+            },
+            f: {
+                location: ["5/7", "5/7"],
+                representation: "f"
+            }
         },
-        b: {
-            location: ["1/3", "3/5"],
-            representation: "b"
-        },
-        c: {
-            location: ["1/3", "5/7"],
-            representation: "c"
-        },
-        d: {
-            location: ["5/7", "1/3"],
-            representation: "d"
-        },
-        e: {
-            location: ["5/7", "3/5"],
-            representation: "e"
-        },
-        f: {
-            location: ["5/7", "5/7"],
-            representation: "f"
-        }
     };
     const endOfLine = navigator.platform.startsWith("Win") ? "\r\n" : "\n";
     const endline = function(event) {
         console.debug("implementing <ENTER> key");
         insertString(endOfLine);
     };
-    for (key in softKeys) {
-        const button = document.createElement("button");
-        button.style.gridColumn = softKeys[key].location[0];
-        button.style.gridRow = softKeys[key].location[1];
-        button.appendChild(
-            document.createTextNode(softKeys[key].representation || key)
-        );
-        keyboard.appendChild(button);
-        button.addEventListener("click", softKeys[key].action || softKey);
-    }
+    const keyboardInit = function(softKeys) {
+        for (key in softKeys) {
+            const button = document.createElement("button");
+            button.style.gridColumn = softKeys[key].location[0];
+            button.style.gridRow = softKeys[key].location[1];
+            button.appendChild(
+                document.createTextNode(softKeys[key].representation || key)
+            );
+            keyboard.appendChild(button);
+            button.addEventListener("click", softKeys[key].action || softKey);
+        }
+    };
     const specialKeys = {
         Backspace: backspace,
         Enter: endline,
@@ -248,6 +252,7 @@ window.addEventListener("load", function() {
     };
     // set focus on editWindow so keys have a target
     editWindow.focus();
+    keyboardInit(GKOSKeys.initial);
     // all interaction with server henceforth will be over a WebSocket
     // try-catch doesn't work here, see stackoverflow.com/a/31003057/493161
     webSocket = new WebSocket("ws://" + location.host);
