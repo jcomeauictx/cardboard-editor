@@ -200,14 +200,29 @@ window.addEventListener("load", function() {
         console.debug("ignoring " + event.key);
     };
     const softKeys = {
-        Escape: {
-            location: [1, 1],
-            representation: "Esc",
-            action: noop
+        a: {
+            location: ["1/3", "1/3"],
+            representation: "a"
         },
-        LeftSquareBracket: {
-            location: [3, 6],
-            representation: "[",
+        b: {
+            location: ["1/3", "3/5"],
+            representation: "b"
+        },
+        c: {
+            location: ["1/3", "5/7"],
+            representation: "c"
+        },
+        d: {
+            location: ["5/7", "1/3"],
+            representation: "d"
+        },
+        e: {
+            location: ["5/7", "3/5"],
+            representation: "e"
+        },
+        f: {
+            location: ["5/7", "5/7"],
+            representation: "f"
         }
     };
     const endOfLine = navigator.platform.startsWith("Win") ? "\r\n" : "\n";
