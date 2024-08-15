@@ -139,7 +139,7 @@ window.addEventListener("load", function() {
         }
         if (event.serial) {  // requires 1-based serial numbers
             console.debug("tunneled key: '" + event.key + "'");
-            if (event.key in specialKeys) {
+            if (Object.keys(specialKeys).includes(event.key)) {
                 console.debug("processing special key " + event.key);
                 specialKeys[event.key]();
             } else {
@@ -233,7 +233,7 @@ window.addEventListener("load", function() {
         insertString(endOfLine);
     };
     const keyboardInit = function(softKeys) {
-        for (key in softKeys) {
+        Object.keys(softKeys).forEach(function(key) {
             const button = document.createElement("button");
             button.style.gridColumn = softKeys[key].location[0];
             button.style.gridRow = softKeys[key].location[1];
@@ -242,7 +242,7 @@ window.addEventListener("load", function() {
             );
             keyboard.appendChild(button);
             button.addEventListener("click", softKeys[key].action || softKey);
-        }
+        });
     };
     const specialKeys = {
         Backspace: backspace,
