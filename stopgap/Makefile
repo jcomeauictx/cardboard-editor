@@ -55,13 +55,16 @@ HTML := $(wildcard *.html)
 CSS := $(wildcard *.css)
 JSCRIPTS := $(filter-out eslint.config.js, $(wildcard *.js))
 JSLINT := $(shell which eslint jshint jslint true | head -n 1)
-VALIDATE := java -jar $(VALIDATOR) --Werror
+JAVA := $(shell which java true | head -n 1)
+VALIDATE := $(JAVA) -jar $(VALIDATOR) --Werror
 ifneq ($(SHOWENV),)
 	export
 else
 	export LOCAL
 endif
 all: lint stop credentials create_ap httpserver
+iphone:
+	$(MAKE) LOCAL=127.0.0.1 stop httpserver
 xtest: xtest.py
 	$(PYTHON) $<
 debug: tkinter.debug
