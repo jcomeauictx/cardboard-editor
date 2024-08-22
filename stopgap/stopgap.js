@@ -297,7 +297,11 @@ window.addEventListener("load", function() {
      * impossible, as the event has already occurred. so what we will do
      * instead is to build the chord with each keydown event */
     const untimedKeyDown = function(event) {
-        untimedChord |= event.value;
+        const key = event.target.firstChild.textContent;
+        const value = GKOSKeys[key].value;
+        untimedChord |= value;
+        console.debug("untimedKeyDown() key '" + key + "' with value " +
+                      value + ", chord: " + untimedChord);
         readyToRead = true;
         return false; // disable default and bubbling
     };
