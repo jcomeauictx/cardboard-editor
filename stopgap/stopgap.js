@@ -24,6 +24,44 @@ window.addEventListener("load", function() {
     const fakeCaret = document.getElementById("fake-caret");
     const keyboard = document.getElementById("keyboard");
     let webSocket = null;  // set this up later
+    let untimedChord = 0;  // simplest possible chording technique
+    let readyToRead = false;  // becomes true on GKOS keydown
+    const baseChars = {
+        // in the following, \0 is placeholder for "",
+        // \v for multi-character entries such as "that ", "the ", ...
+        lower:
+            "\0abcdefghijklmnopqrstuvwxyz\v\v\v\v." +
+            ",!?-'\\/\v\v\v\0\0\0\0\0\0\0\0 \0\0\0\0\t\0\0\0\0\0\0\0\0",
+        upper:
+            "\0ABCDEFGHIJKLMNOPQRSTUVWXYZ\v\v\v\v:" +
+            ';|~_"\u0300\u0301' +
+            "\v\v\v\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
+        symbolsLower:
+            "\x001234560789#@½&+%=^*$€£([<{)]>}." +
+            ",!?-'\\/μ§\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
+        symbolsUpper:
+            "\x001234560789#@½&+%=^*$€£([<{)]>}:" +
+            ';|~_"\u0300\u0301μ§\u030c' +
+            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0°\0\0\0\0\0"
+    };
+    const GKOS = {
+        latin: Object.fromEntries(Array.from(
+                baseChars.lower + baseChars.upper +
+                baseChars.symbolsLower + baseChars.symbolsUpper
+            ).map(function(value, key) {
+                return [key, value == "\0" ? "" : value];
+            })
+        )
+    };
+    const patch = {
+        english: {
+            27: "th", 28: "that ", 29: "the ", 30: "of ",
+            39: "and ", 40: "with ", 41: "to ",
+            91: "Th", 92: "That ", 93: "The ", 94: "Of ",
+            103: "And ", 104: "With ", 105: "To "
+        },
+    };
+    GKOS.english = Object.assign({}, GKOS.latin, patch.english);
     class KeyClick extends KeyboardEvent {
         constructor(key, code, serial) {
             super("keydown", {key: key, code: code});
@@ -183,10 +221,9 @@ window.addEventListener("load", function() {
         console.debug("dispatching key '" + key + "', code: " + code);
         document.body.dispatchEvent(event);
     };
-    const softKey = function(event) {
-        const key = event.target.firstChild.textContent;
-        console.debug("softKey", key, "pressed");
-        sendKey(key, key, null);
+    const softKey = function(character) {
+        console.debug("softKey", character, "pressed");
+        sendKey(character, character, null);
     };
     const backspace = function(event) {
         const selected = caretPosition.end - caretPosition.start;
@@ -200,32 +237,36 @@ window.addEventListener("load", function() {
         console.debug("ignoring " + event.key);
     };
     const GKOSKeys = {
-        initial: {
-            a: {
-                location: ["1/3", "1/3"],
-                representation: "a"
-            },
-            b: {
-                location: ["1/3", "3/5"],
-                representation: "b"
-            },
-            c: {
-                location: ["1/3", "5/7"],
-                representation: "c"
-            },
-            d: {
-                location: ["5/7", "1/3"],
-                representation: "d"
-            },
-            e: {
-                location: ["5/7", "3/5"],
-                representation: "e"
-            },
-            f: {
-                location: ["5/7", "5/7"],
-                representation: "f"
-            }
+        a: {
+            location: ["1/3", "1/3"],
+            representation: "a",
+            value: 1
         },
+        b: {
+            location: ["1/3", "3/5"],
+            representation: "b",
+            value: 2
+        },
+        c: {
+            location: ["1/3", "5/7"],
+            representation: "c",
+            value: 4
+        },
+        d: {
+            location: ["5/7", "1/3"],
+            representation: "d",
+            value: 8
+        },
+        e: {
+            location: ["5/7", "3/5"],
+            representation: "e",
+            value: 16
+        },
+        f: {
+            location: ["5/7", "5/7"],
+            representation: "f",
+            value: 32
+        }
     };
     const endOfLine = navigator.platform.startsWith("Win") ? "\r\n" : "\n";
     const endline = function(event) {
@@ -241,18 +282,36 @@ window.addEventListener("load", function() {
                 document.createTextNode(softKeys[key].representation || key)
             );
             keyboard.appendChild(button);
-            button.addEventListener("click", softKeys[key].action || softKey);
+            button.addEventListener("mousedown", untimedKeyDown);
+            button.addEventListener("mouseup", untimedKeyUp);
         });
     };
     const specialKeys = {
         Backspace: backspace,
         Enter: endline,
         Escape: noop,
-        Esc: noop,
+    };
+    // begin untimed keychord processing
+    /* the description on page 20 of gkos_spec_v314.pdf says to read chord
+     * value "immediately before the key went up", which is of course
+     * impossible, as the event has already occurred. so what we will do
+     * instead is to build the chord with each keydown event */
+    const untimedKeyDown = function(event) {
+        untimedChord |= event.value;
+        readyToRead = true;
+        return false; // disable default and bubbling
+    };
+    const untimedKeyUp = function(event) {
+        if (readyToRead) {
+            readyToRead = false;
+            softKey(GKOS.english[untimedChord]);
+            untimedChord = 0;
+        }
+        return false; // disable default and bubbling
     };
     // set focus on editWindow so keys have a target
     editWindow.focus();
-    keyboardInit(GKOSKeys.initial);
+    keyboardInit(GKOSKeys);
     // all interaction with server henceforth will be over a WebSocket
     // try-catch doesn't work here, see stackoverflow.com/a/31003057/493161
     webSocket = new WebSocket("ws://" + location.host);
