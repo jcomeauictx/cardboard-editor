@@ -26,6 +26,60 @@ window.addEventListener("load", function() {
     let webSocket = null;  // set this up later
     let untimedChord = 0;  // simplest possible chording technique
     let readyToRead = false;  // becomes true on GKOS keydown
+    // key to chord mapping for GKOS
+    const _ = 0x00;
+    const A = 0x01;
+    const B = 0x02;
+    const C = 0x04;
+    const D = 0x08;
+    const E = 0x10;
+    const F = 0x20;
+    // X (64) and Y (128) are not keys, but chord offsets
+    const X = 0x40;
+    const Y = 0x80;
+    const mapping = { // chords to character indices
+        [A]: 1, // a
+        [B]: 2, // b
+        [C]: 3, // c
+        [D]: 4, // d
+        [E]: 5, // e
+        [F]: 6, // f
+        [_|_|_|D|E|_]: 7, // g
+        [A|_|_|D|E|_]: 8, // h
+        [_|B|_|D|E|_]: 9, // i
+        [_|_|C|D|E|_]: 10, // j
+        [_|_|_|_|E|F]: 11, // k
+        [A|_|_|_|E|F]: 12, // l
+        [_|B|_|_|E|F]: 13, // m
+        [_|_|C|_|E|F]: 14, // n
+        [A|B|_|_|_|_]: 15, // o
+        [A|B|_|D|_|_]: 16, // p
+        [A|B|_|_|E|_]: 17, // q
+        [A|B|_|_|_|F]: 18, // r
+        [_|B|C|_|_|_]: 19, // s
+        [_|B|C|D|_|_]: 20, // t
+        [_|B|C|_|E|_]: 21, // u
+        [_|B|C|_|_|F]: 22, // v
+        [_|_|_|D|_|F]: 23, // w
+        [A|_|_|D|_|F]: 24, // x
+        [_|B|_|D|_|F]: 25, // y
+        [_|_|C|D|_|F]: 26, // z
+        [A|_|C|_|_|_]: 27, // th
+        [A|_|C|D|_|_]: 28, // "that "
+        [A|_|C|_|E|_]: 29, // "the "
+        [A|_|C|_|_|F]: 30, // "of "
+        [_|B|_|_|_|F]: 31, // .
+        [_|_|C|_|E|_]: 32, // ,
+        [_|_|C|D|_|_]: 33, // !
+        [A|_|_|_|_|F]: 34, // ?
+        [A|_|_|_|E|_]: 35, // -
+        [_|B|_|D|_|_]: 36, // '
+        [A|B|_|_|E|F]: 37, // \
+        [_|B|C|D|E|_]: 38, // /
+        [A|_|C|_|E|F]: 39, // "and "
+        [_|B|C|D|_|F]: 40, // "with "
+        [A|_|C|D|E|_]: 41, // "to "
+    };
     const baseChars = {
         // in the following, \0 is placeholder for "",
         // \v for multi-character entries such as "that ", "the ", ...
@@ -62,6 +116,7 @@ window.addEventListener("load", function() {
         },
     };
     GKOS.english = Object.assign({}, GKOS.latin, patch.english);
+    console.debug("characters available: " + GKOS.english);
     class KeyClick extends KeyboardEvent {
         constructor(key, code, serial) {
             super("keydown", {key: key, code: code});
@@ -306,9 +361,13 @@ window.addEventListener("load", function() {
         return false; // disable default and bubbling
     };
     const untimedKeyUp = function(event) {
+        const key = event.target.firstChild.textContent;
+        console.debug("untimedKeyUp() key '" + key + "' processing");
         if (readyToRead) {
+            const index = mapping[untimedChord] || 0;
+            const character = GKOS.english[index] || '';
             readyToRead = false;
-            softKey(GKOS.english[untimedChord]);
+            softKey(character);
             untimedChord = 0;
         }
         return false; // disable default and bubbling
