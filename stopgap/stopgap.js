@@ -117,9 +117,15 @@ window.addEventListener("load", function() {
     };
     GKOS.english = Object.assign({}, GKOS.latin, patch.english);
     console.debug("characters available: " + GKOS.english);
-    class KeyClick extends KeyboardEvent {
+    class KeyDown extends KeyboardEvent {
         constructor(key, code, serial) {
             super("keydown", {key: key, code: code});
+            this.serial = serial;
+        }
+    }
+    class KeyUp extends KeyboardEvent {
+        constructor(key, code, serial) {
+            super("keyup", {key: key, code: code});
             this.serial = serial;
         }
     }
@@ -271,14 +277,16 @@ window.addEventListener("load", function() {
             console.debug("ignoring keypress while edit window has focus");
         }
     });
-    const sendKey = function(key, code, serial) {
-        const event = new KeyClick(key, code, serial);
-        console.debug("dispatching key '" + key + "', code: " + code);
+    const sendKey = function(key, code, serial, direction=0) {
+        const event = new [KeyDown, KeyUp][direction](key, code, serial);
+        console.debug("dispatching key" + ["down", "up"][direction] +
+                      " '" + key + "', code: " + code);
         document.body.dispatchEvent(event);
     };
-    const softKey = function(character) {
-        console.debug("softKey", character, "pressed");
-        sendKey(character, character, null);
+    const softKey = function(character, direction=0) {
+        console.debug("softKey " + character +
+                      ["pressed", "released"][direction]);
+        sendKey(character, character, null, direction);
     };
     const backspace = function(event) {
         const selected = caretPosition.end - caretPosition.start;
@@ -358,16 +366,17 @@ window.addEventListener("load", function() {
         console.debug("untimedKeyDown() key '" + key + "' with value " +
                       value + ", chord: " + untimedChord);
         readyToRead = true;
+        softKey(character);
         return false; // disable default and bubbling
     };
     const untimedKeyUp = function(event) {
         const key = event.target.firstChild.textContent;
         console.debug("untimedKeyUp() key '" + key + "' processing");
+        softKey(character, 1);
         if (readyToRead) {
             const index = mapping[untimedChord] || 0;
             const character = GKOS.english[index] || '';
             readyToRead = false;
-            softKey(character);
             untimedChord = 0;
         }
         return false; // disable default and bubbling
