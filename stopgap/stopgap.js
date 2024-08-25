@@ -243,14 +243,6 @@ window.addEventListener("load", function() {
             console.debug("tunneled key '" + key + "' with value " +
                           value + ", chord: " + untimedChord);
             readyToRead = true;
-            // move the following to keyup `if (event.serial)` clause
-            if (specialKeys[key]) {
-                console.debug("processing special key " + key);
-                specialKeys[key]();
-            } else {
-                deleteSelected();
-                insertString(key);
-            }
         } else if (event.code === "") {
             console.debug("test key: '" + event.key + "'");
             return true;  // let it bubble to editWindow?
@@ -264,7 +256,11 @@ window.addEventListener("load", function() {
             }
             console.debug("sending key '" + event.key +
                           "' through webSocket tunnel");
-            webSocket.send(JSON.stringify({key: event.key, echo: echo}));
+            webSocket.send(JSON.stringify({
+                key: event.key,
+                direction: "down",
+                echo: echo
+            }));
             return false;  // stop propagation and default action
         }
     });
@@ -272,8 +268,21 @@ window.addEventListener("load", function() {
         console.debug("key '" + event.key + "' reached edit-window");
     });
     document.body.addEventListener("keyup", function(event) {
-        if (hasFocus != editWindow) {
-            console.debug("key released:", event.key);
+        if (event.serial) {
+            const key = event.key;
+            if (readyToRead) {
+                const index = mapping[untimedChord] || 0;
+                const character = GKOS.english[index] || '';
+                readyToRead = false;
+                untimedChord = 0;
+            }
+            if (specialKeys[character]) {
+                console.debug("processing special key " + character);
+                specialKeys[character]();
+            } else {
+                deleteSelected();
+                insertString(character);
+            }
         }
     });
     document.body.addEventListener("keypress", function(event) {
@@ -373,13 +382,6 @@ window.addEventListener("load", function() {
     const untimedKeyUp = function(event) {
         const key = event.target.firstChild.textContent;
         console.debug("untimedKeyUp() key '" + key + "' processing");
-        softKey(character, 1);
-        if (readyToRead) {
-            const index = mapping[untimedChord] || 0;
-            const character = GKOS.english[index] || '';
-            readyToRead = false;
-            untimedChord = 0;
-        }
         return false; // disable default and bubbling
     };
     // set focus on editWindow so keys have a target
@@ -390,10 +392,12 @@ window.addEventListener("load", function() {
     webSocket = new WebSocket("ws://" + location.host);
     webSocket.onmessage = function(event) {
         let message = null;
+        let direction = 0;
         console.debug("Data received: " + event.data);
         try {
             message = JSON.parse(event.data);
-            sendKey(message.key, message.code, message.serial);
+            direction = (message["direction"] == "up");
+            sendKey(message.key, message.code, message.serial, direction);
         } catch (parseError) {
             console.error("unexpected message: " + parseError);
             message = event.data;
