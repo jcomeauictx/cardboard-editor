@@ -293,8 +293,8 @@ window.addEventListener("load", function() {
         }
     });
     const sendKey = function(key, code, serial, direction=0) {
-        const event = new [KeyDown, KeyUp][direction](key, code, serial);
-        console.debug("dispatching key" + ["down", "up"][direction] +
+        const event = new (direction ? KeyUp : KeyDown)(key, code, serial);
+        console.debug("dispatching key" + direction ? "up" : "down" +
                       " '" + key + "', code: " + code);
         document.body.dispatchEvent(event);
     };
@@ -360,8 +360,8 @@ window.addEventListener("load", function() {
                 document.createTextNode(softKeys[key].representation || key)
             );
             keyboard.appendChild(button);
-            button.addEventListener("mousedown", untimedKeyDown);
-            button.addEventListener("mouseup", untimedKeyUp);
+            button.addEventListener("mousedown", chordKeyDown);
+            button.addEventListener("mouseup", chordKeyUp);
         });
     };
     const specialKeys = {
@@ -374,14 +374,15 @@ window.addEventListener("load", function() {
      * value "immediately before the key went up", which is of course
      * impossible, as the event has already occurred. so what we will do
      * instead is to build the chord with each keydown event */
-    const untimedKeyDown = function(event) {
+    const chordKeyDown = function(event) {
         const key = event.target.firstChild.textContent;
         softKey(key);
         return false; // disable default and bubbling
     };
-    const untimedKeyUp = function(event) {
+    const chordKeyUp = function(event) {
         const key = event.target.firstChild.textContent;
-        console.debug("untimedKeyUp() key '" + key + "' processing");
+        console.debug("chordKeyUp() key '" + key + "' processing");
+        softKey(key, 1);
         return false; // disable default and bubbling
     };
     // set focus on editWindow so keys have a target
