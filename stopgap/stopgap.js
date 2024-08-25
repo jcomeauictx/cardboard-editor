@@ -294,13 +294,13 @@ window.addEventListener("load", function() {
     });
     const sendKey = function(key, code, serial, direction=0) {
         const event = new (direction ? KeyUp : KeyDown)(key, code, serial);
-        console.debug("dispatching key" + direction ? "up" : "down" +
+        console.debug("dispatching key" + (direction ? "up" : "down") +
                       " '" + key + "', code: " + code);
         document.body.dispatchEvent(event);
     };
     const softKey = function(character, direction=0) {
-        console.debug("softKey " + character +
-                      ["pressed", "released"][direction]);
+        console.debug("softKey " + character + " " +
+                      (direction ? "released" : "pressed"));
         sendKey(character, character, null, direction);
     };
     const backspace = function(event) {
