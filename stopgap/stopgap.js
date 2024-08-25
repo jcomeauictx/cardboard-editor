@@ -237,13 +237,19 @@ window.addEventListener("load", function() {
             return false;  // stop propagation and default action
         }
         if (event.serial) {  // requires 1-based serial numbers
-            console.debug("tunneled key: '" + event.key + "'");
-            if (Object.keys(specialKeys).includes(event.key)) {
-                console.debug("processing special key " + event.key);
-                specialKeys[event.key]();
+            const key = event.key;
+            const value = GKOSKeys[key].value;
+            untimedChord |= value;
+            console.debug("tunneled key '" + key + "' with value " +
+                          value + ", chord: " + untimedChord);
+            readyToRead = true;
+            // move the following to keyup `if (event.serial)` clause
+            if (specialKeys[key]) {
+                console.debug("processing special key " + key);
+                specialKeys[key]();
             } else {
                 deleteSelected();
-                insertString(event.key);
+                insertString(key);
             }
         } else if (event.code === "") {
             console.debug("test key: '" + event.key + "'");
@@ -361,12 +367,7 @@ window.addEventListener("load", function() {
      * instead is to build the chord with each keydown event */
     const untimedKeyDown = function(event) {
         const key = event.target.firstChild.textContent;
-        const value = GKOSKeys[key].value;
-        untimedChord |= value;
-        console.debug("untimedKeyDown() key '" + key + "' with value " +
-                      value + ", chord: " + untimedChord);
-        readyToRead = true;
-        softKey(character);
+        softKey(key);
         return false; // disable default and bubbling
     };
     const untimedKeyUp = function(event) {
