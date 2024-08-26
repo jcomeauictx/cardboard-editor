@@ -249,12 +249,12 @@ window.addEventListener("load", function() {
         } else {
             console.debug("local key: '" + event.key + "'");
             if (hasFocus == editWindow) {
-                console.debug("key " + event.key +
+                console.debug("keydown " + event.key +
                               ", code: " + event.code +
                               " assumed to be processed by editWindow");
                 echo = false;
             }
-            console.debug("sending key '" + event.key +
+            console.debug("sending keydown '" + event.key +
                           "' through webSocket tunnel");
             webSocket.send(JSON.stringify({
                 key: event.key,
@@ -268,6 +268,7 @@ window.addEventListener("load", function() {
         console.debug("key '" + event.key + "' reached edit-window");
     });
     document.body.addEventListener("keyup", function(event) {
+        let echo = true;
         if (event.serial) {
             const key = event.key;
             if (readyToRead) {
@@ -275,14 +276,31 @@ window.addEventListener("load", function() {
                 const character = GKOS.english[index] || '';
                 readyToRead = false;
                 untimedChord = 0;
+                if (specialKeys[character]) {
+                    console.debug("processing special key " + character);
+                    specialKeys[character]();
+                } else {
+                    deleteSelected();
+                    console.debug("inserting character '" + character + "'");
+                    insertString(character);
+                }
             }
-            if (specialKeys[character]) {
-                console.debug("processing special key " + character);
-                specialKeys[character]();
-            } else {
-                deleteSelected();
-                insertString(character);
+        } else {
+            console.debug("local key: '" + event.key + "'");
+            if (hasFocus == editWindow) {
+                console.debug("keyup " + event.key +
+                              ", code: " + event.code +
+                              " assumed to be processed by editWindow");
+                echo = false;
             }
+            console.debug("sending keyup '" + event.key +
+                          "' through webSocket tunnel");
+            webSocket.send(JSON.stringify({
+                key: event.key,
+                direction: "up",
+                echo: echo
+            }));
+            return false;  // stop propagation and default action
         }
     });
     document.body.addEventListener("keypress", function(event) {
