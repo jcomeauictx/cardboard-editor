@@ -116,7 +116,7 @@ window.addEventListener("load", function() {
         },
     };
     GKOS.english = Object.assign({}, GKOS.latin, patch.english);
-    console.debug("characters available: " + GKOS.english);
+    console.debug("characters available: " + JSON.stringify(GKOS.english));
     class KeyDown extends KeyboardEvent {
         constructor(key, code, serial) {
             super("keydown", {key: key, code: code});
@@ -147,7 +147,7 @@ window.addEventListener("load", function() {
         const editText = editWindow.value;
         caretPosition.start = editWindow.selectionStart;
         caretPosition.end = editWindow.selectionEnd;
-        console.debug("caretPosition: ", caretPosition);
+        console.debug("caretPosition: " + JSON.stringify(caretPosition));
         replaceChildren(background.firstChild, [
             document.createTextNode(editText.substring(0, caretPosition.end)),
             fakeCaret,
@@ -378,8 +378,9 @@ window.addEventListener("load", function() {
                 document.createTextNode(softKeys[key].representation || key)
             );
             keyboard.appendChild(button);
-            button.addEventListener("mousedown", chordKeyDown);
-            button.addEventListener("mouseup", chordKeyUp);
+            button.addEventListener("touchstart", chordKeyDown);
+            button.addEventListener("touchcancel", chordKeyUp);
+            button.addEventListener("touchend", chordKeyUp);
         });
     };
     const specialKeys = {
