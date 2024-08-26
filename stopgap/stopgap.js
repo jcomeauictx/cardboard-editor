@@ -379,9 +379,11 @@ window.addEventListener("load", function() {
                 document.createTextNode(softKeys[key].representation || key)
             );
             keyboard.appendChild(button);
-            button.addEventListener("touchstart", chordKeyDown);
-            button.addEventListener("touchcancel", chordKeyUp);
-            button.addEventListener("touchend", chordKeyUp);
+            button.addEventListener("pointerdown", chordKeyDown);
+            button.addEventListener("pointerup", chordKeyUp);
+            button.addEventListener("pointerleave", chordKeyUp);
+            button.addEventListener("pointercancel", chordKeyUp);
+            button.addEventListener("pointerout", chordKeyUp);
         });
     };
     const specialKeys = {
@@ -397,15 +399,16 @@ window.addEventListener("load", function() {
     const chordKeyDown = function(event) {
         const button = event.target;
         const key = button.firstChild.textContent;
-        button.classList.add("active");
+        console.debug("chordKeyDown() key '" + key + "' processing");
+        button.style.background = "blue";
         softKey(key);
         return false; // disable default and bubbling
     };
     const chordKeyUp = function(event) {
         const button = event.target;
         const key = button.firstChild.textContent;
-        button.classList.remove("active");
         console.debug("chordKeyUp() key '" + key + "' processing");
+        button.style.background = "buttonface"; // default
         softKey(key, 1);
         return false; // disable default and bubbling
     };
