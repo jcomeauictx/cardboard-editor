@@ -238,6 +238,7 @@ window.addEventListener("load", function() {
         }
         if (event.serial) {  // requires 1-based serial numbers
             const key = event.key;
+            // FIXME: add code here to handle hardware keys on laptop
             const value = GKOSKeys[key].value;
             untimedChord |= value;
             console.debug("tunneled key '" + key + "' with value " +
