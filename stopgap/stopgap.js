@@ -394,12 +394,16 @@ window.addEventListener("load", function() {
      * impossible, as the event has already occurred. so what we will do
      * instead is to build the chord with each keydown event */
     const chordKeyDown = function(event) {
-        const key = event.target.firstChild.textContent;
+        const button = event.target;
+        const key = button.firstChild.textContent;
+        button.classList.add("active");
         softKey(key);
         return false; // disable default and bubbling
     };
     const chordKeyUp = function(event) {
-        const key = event.target.firstChild.textContent;
+        const button = event.target;
+        const key = button.firstChild.textContent;
+        button.classList.remove("active");
         console.debug("chordKeyUp() key '" + key + "' processing");
         softKey(key, 1);
         return false; // disable default and bubbling
