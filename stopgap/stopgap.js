@@ -119,15 +119,17 @@ window.addEventListener("load", function() {
     GKOS.english = Object.assign({}, GKOS.latin, patch.english);
     console.debug("characters available: " + JSON.stringify(GKOS.english));
     class KeyDown extends KeyboardEvent {
-        constructor(key, code, serial) {
+        constructor(key, code, serial, keytype) {
             super("keydown", {key: key, code: code});
             this.serial = serial;
+            this.keytype = keytype;
         }
     }
     class KeyUp extends KeyboardEvent {
-        constructor(key, code, serial) {
+        constructor(key, code, serial, keytype) {
             super("keyup", {key: key, code: code});
             this.serial = serial;
+            this.keytype = keytype;
         }
     }
     fakeCaret.parentNode.removeChild(fakeCaret);  // remove from DOM
@@ -228,6 +230,7 @@ window.addEventListener("load", function() {
         // only process the events after they've been sent over webSocket
         console.debug("processing keydown event, key: " + event.key +
                       ", code: " + event.code + ", serial: " + event.serial +
+                      ", keytype: " + event.keytype +
                       ", target: " + event.currentTarget.tagName +
                       ", eventPhase: " + phases[event.eventPhase]);
         let echo = true;
@@ -239,18 +242,22 @@ window.addEventListener("load", function() {
         }
         if (event.serial) {  // requires 1-based serial numbers
             const key = event.key;
-            // FIXME: add code here to handle hardware keys on laptop
-            const value = GKOSKeys[key].value;
-            untimedChord |= value;
-            console.debug("tunneled key '" + key + "' with value " +
-                          value + ", chord: " + untimedChord);
-            readyToRead = true;
+            if (event.keytype == "gkos") {
+                const value = GKOSKeys[key].value;
+                untimedChord |= value;
+                console.debug("tunneled key '" + key + "' with value " +
+                              value + ", chord: " + untimedChord);
+                readyToRead = true;
+            } else {
+                // hardware key, or platform-supplied softkey
+                console.debug("tunneled key '" + key + "' with value " +
+                              value + ", using verbatim");
+            }
         } else if (event.code === "") {
             console.debug("test key: '" + event.key + "'");
-            return true;  // let it bubble to editWindow?
         } else {
             console.debug("local key: '" + event.key + "'");
-            if (hasFocus == editWindow) {
+            if (hasFocus == editWindow && !event.keytype) {
                 console.debug("keydown " + event.key +
                               ", code: " + event.code +
                               " assumed to be processed by editWindow");
@@ -261,7 +268,8 @@ window.addEventListener("load", function() {
             webSocket.send(JSON.stringify({
                 key: event.key,
                 direction: "down",
-                echo: echo
+                echo: echo,
+                keytype: event.keytype
             }));
             return false;  // stop propagation and default action
         }
@@ -300,7 +308,8 @@ window.addEventListener("load", function() {
             webSocket.send(JSON.stringify({
                 key: event.key,
                 direction: "up",
-                echo: echo
+                echo: echo,
+                keytype: event.keytype
             }));
             return false;  // stop propagation and default action
         }
@@ -312,16 +321,18 @@ window.addEventListener("load", function() {
             console.debug("ignoring keypress while edit window has focus");
         }
     });
-    const sendKey = function(key, code, serial, direction=0) {
-        const event = new (direction ? KeyUp : KeyDown)(key, code, serial);
+    const sendKey = function(key, code, serial, direction=0, keytype=null) {
+        const event = new (direction ? KeyUp : KeyDown)(
+            key, code, serial, keytype
+        );
         console.debug("dispatching key" + (direction ? "up" : "down") +
                       " '" + key + "', code: " + code);
         document.body.dispatchEvent(event);
     };
-    const softKey = function(character, direction=0) {
+    const softKey = function(character, direction=0, keytype="soft") {
         console.debug("softKey " + character + " " +
                       (direction ? "released" : "pressed"));
-        sendKey(character, character, null, direction);
+        sendKey(character, character, null, direction, keytype);
     };
     const backspace = function(event) {
         const selected = caretPosition.end - caretPosition.start;
@@ -415,7 +426,7 @@ window.addEventListener("load", function() {
         const key = button.firstChild.textContent;
         console.debug("chordKeyDown() key '" + key + "' processing");
         button.style.background = "blue";
-        softKey(key);
+        softKey(key, keytype="gkos");
         return false; // disable default and bubbling
     };
     const chordKeyUp = function(event) {
@@ -423,7 +434,7 @@ window.addEventListener("load", function() {
         const key = button.firstChild.textContent;
         console.debug("chordKeyUp() key '" + key + "' processing");
         button.style.background = "buttonface"; // default
-        softKey(key, 1);
+        softKey(key, 1, keytype="gkos");
         return false; // disable default and bubbling
     };
     const chordKeyClick = function(event) {
