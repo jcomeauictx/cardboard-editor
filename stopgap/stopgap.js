@@ -395,6 +395,8 @@ window.addEventListener("load", function() {
                 button.addEventListener("pointerleave", cancel);
                 button.addEventListener("pointercancel", cancel);
                 button.addEventListener("pointerout", cancel);
+            } else {
+                button.addEventListener("click", chordKeyClick);
             }
         });
     };
@@ -423,6 +425,11 @@ window.addEventListener("load", function() {
         button.style.background = "buttonface"; // default
         softKey(key, 1);
         return false; // disable default and bubbling
+    };
+    const chordKeyClick = function(event) {
+        /* just for testing, no real use for softkeys on desktop */
+        chordKeyDown(event);
+        chordKeyUp(event);
     };
     // set focus on editWindow so keys have a target
     editWindow.focus();
