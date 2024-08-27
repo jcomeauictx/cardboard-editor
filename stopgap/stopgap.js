@@ -5,6 +5,7 @@ window.addEventListener("load", function() {
         2: "AT_TARGET",
         3: "BUBBLING"
     };
+    const mobileBrowser = /Mobile|Android|iPhone/.test(navigator.userAgent);
     const replaceChildren = function(element, newChildren) {
         try {
             element.replaceChildren(...newChildren);
@@ -370,6 +371,15 @@ window.addEventListener("load", function() {
         console.debug("implementing <ENTER> key");
         insertString(endOfLine);
     };
+    const cancel = function(event) {
+        /* remove key from chord */
+        const button = event.target;
+        const key = button.firstChild.textContent;
+        const value = GKOSKeys[key].value;
+        console.debug("removing component " + value + " from chord " +
+                      untimedChord);
+        untimedChord &= ~value;
+    };
     const keyboardInit = function(softKeys) {
         Object.keys(softKeys).forEach(function(key) {
             const button = document.createElement("button");
@@ -379,11 +389,13 @@ window.addEventListener("load", function() {
                 document.createTextNode(softKeys[key].representation || key)
             );
             keyboard.appendChild(button);
-            button.addEventListener("pointerdown", chordKeyDown);
-            button.addEventListener("pointerup", chordKeyUp);
-            button.addEventListener("pointerleave", chordKeyUp);
-            button.addEventListener("pointercancel", chordKeyUp);
-            button.addEventListener("pointerout", chordKeyUp);
+            if (mobileBrowser) {
+                button.addEventListener("pointerdown", chordKeyDown);
+                button.addEventListener("pointerup", chordKeyUp);
+                button.addEventListener("pointerleave", cancel);
+                button.addEventListener("pointercancel", cancel);
+                button.addEventListener("pointerout", cancel);
+            }
         });
     };
     const specialKeys = {
