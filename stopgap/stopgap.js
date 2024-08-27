@@ -430,6 +430,7 @@ window.addEventListener("load", function() {
         /* just for testing, no real use for softkeys on desktop */
         chordKeyDown(event);
         chordKeyUp(event);
+        return true; // allow default action to remove border?
     };
     // set focus on editWindow so keys have a target
     editWindow.focus();
