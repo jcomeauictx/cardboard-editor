@@ -321,17 +321,17 @@ window.addEventListener("load", function() {
             console.debug("ignoring keypress while edit window has focus");
         }
     });
-    const sendKey = function(key, code, serial, direction=0, keytype=null) {
-        const event = new (direction ? KeyUp : KeyDown)(
+    const sendKey = function(key, code, serial, direction, keytype) {
+        const event = new (direction == "up" ? KeyUp : KeyDown)(
             key, code, serial, keytype
         );
-        console.debug("dispatching key" + (direction ? "up" : "down") +
+        console.debug("dispatching key" + direction +
                       " '" + key + "', code: " + code);
         document.body.dispatchEvent(event);
     };
-    const softKey = function(character, direction=0, keytype="soft") {
+    const softKey = function(character, direction, keytype) {
         console.debug("softKey " + character + " " +
-                      (direction ? "released" : "pressed"));
+                      (direction == "up" ? "released" : "pressed"));
         sendKey(character, character, null, direction, keytype);
     };
     const backspace = function(event) {
@@ -426,7 +426,7 @@ window.addEventListener("load", function() {
         const key = button.firstChild.textContent;
         console.debug("chordKeyDown() key '" + key + "' processing");
         button.style.background = "blue";
-        softKey(key, keytype="gkos");
+        softKey(key, "down", "gkos");
         return false; // disable default and bubbling
     };
     const chordKeyUp = function(event) {
@@ -434,7 +434,7 @@ window.addEventListener("load", function() {
         const key = button.firstChild.textContent;
         console.debug("chordKeyUp() key '" + key + "' processing");
         button.style.background = "buttonface"; // default
-        softKey(key, 1, keytype="gkos");
+        softKey(key, "up", "gkos");
         return false; // disable default and bubbling
     };
     const chordKeyClick = function(event) {
@@ -451,12 +451,11 @@ window.addEventListener("load", function() {
     webSocket = new WebSocket("ws://" + location.host);
     webSocket.onmessage = function(event) {
         let message = null;
-        let direction = 0;
         console.debug("Data received: " + event.data);
         try {
             message = JSON.parse(event.data);
-            direction = (message["direction"] == "up");
-            sendKey(message.key, message.code, message.serial, direction);
+            sendKey(message.key, message.code, message.serial,
+                    message.direction, message.keytype);
         } catch (parseError) {
             console.error("unexpected message: " + parseError);
             message = event.data;
