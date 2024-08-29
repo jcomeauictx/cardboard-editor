@@ -254,8 +254,9 @@ window.addEventListener("load", function() {
                 readyToRead = true;
             } else {
                 // hardware key, or platform-supplied softkey
-                console.debug("tunneled key '" + key + "' with value " +
-                              value + ", using verbatim");
+                console.debug("tunneled key '" + key + "', using verbatim");
+                deleteSelected();
+                insertString(key);
             }
         } else if (event.code === "") {
             console.debug("test key: '" + event.key + "'");
