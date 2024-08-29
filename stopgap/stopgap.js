@@ -1,4 +1,8 @@
 window.addEventListener("load", function() {
+    /* eventually we probably could/should eliminate the textarea altogether
+       and just use the background div, vastly simplifying the code. but
+       during development, I want to compare how well my code mirrors the
+       native native handling of keypress events by textarea. */
     const phases = {
         0: "NONE",
         1: "CAPTURING",
