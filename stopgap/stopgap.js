@@ -301,7 +301,7 @@ window.addEventListener("load", function() {
             }
         } else {
             console.debug("local key: '" + event.key + "'");
-            if (hasFocus == editWindow) {
+            if (hasFocus == editWindow && !event.keytype) {
                 console.debug("keyup " + event.key +
                               ", code: " + event.code +
                               " assumed to be processed by editWindow");
