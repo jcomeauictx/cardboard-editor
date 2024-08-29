@@ -387,20 +387,29 @@ window.addEventListener("load", function() {
         insertString(endOfLine);
     };
     const cancel = function(event) {
-        /* remove key from chord */
+        /* remove key from chord
+
+           only to be used if no chordKeyUp was seen; because pointerout
+           and pointerleave events will be called regardless of chordKeyUp's
+           `return false`, we don't want to erase the chord before its
+           character is rendered in the edit window.
+        */
         const button = event.target;
         const key = button.firstChild.textContent;
         const value = GKOSKeys[key].value;
-        console.debug("event " + event.type + " removing component " +
-                      value + " from chord " + untimedChord);
-        untimedChord &= ~value;
-        button.style.background = "buttonface"; // default
+        if (!button.getAttribute("key-up-seen")) {
+            console.debug("event " + event.type + " removing component " +
+                          value + " from chord " + untimedChord);
+            untimedChord &= ~value;
+        }
+        button.style.removeProperty("background"); // revert to default
     };
     const keyboardInit = function(softKeys) {
         Object.keys(softKeys).forEach(function(key) {
             const button = document.createElement("button");
             button.style.gridColumn = softKeys[key].location[0];
             button.style.gridRow = softKeys[key].location[1];
+            button.setAttribute("key-up-seen", "");
             button.appendChild(
                 document.createTextNode(softKeys[key].representation || key)
             );
@@ -431,6 +440,7 @@ window.addEventListener("load", function() {
         const key = button.firstChild.textContent;
         console.debug("chordKeyDown() key '" + key + "' processing");
         button.style.background = "blue";
+        button.setAttribute("key-up-seen", "");
         softKey(key, "down", "gkos");
         return false; // disable default and bubbling
     };
@@ -438,7 +448,8 @@ window.addEventListener("load", function() {
         const button = event.target;
         const key = button.firstChild.textContent;
         console.debug("chordKeyUp() key '" + key + "' processing");
-        button.style.background = "buttonface"; // default
+        button.setAttribute("key-up-seen", "true");
+        button.style.removeProperty("background"); // revert to default
         softKey(key, "up", "gkos");
         return false; // disable default and bubbling
     };
