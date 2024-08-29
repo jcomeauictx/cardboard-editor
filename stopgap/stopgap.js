@@ -391,8 +391,8 @@ window.addEventListener("load", function() {
         const button = event.target;
         const key = button.firstChild.textContent;
         const value = GKOSKeys[key].value;
-        console.debug("removing component " + value + " from chord " +
-                      untimedChord);
+        console.debug("event " + event.type + " removing component " +
+                      value + " from chord " + untimedChord);
         untimedChord &= ~value;
         button.style.background = "buttonface"; // default
     };
