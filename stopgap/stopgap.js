@@ -390,6 +390,7 @@ window.addEventListener("load", function() {
         console.debug("removing component " + value + " from chord " +
                       untimedChord);
         untimedChord &= ~value;
+        button.style.background = "buttonface"; // default
     };
     const keyboardInit = function(softKeys) {
         Object.keys(softKeys).forEach(function(key) {
