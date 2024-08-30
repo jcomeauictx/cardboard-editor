@@ -15,6 +15,11 @@ PORT = os.getenv('PORT') or 8000
 KEYS = [chr(n).encode() for n in range(32, 127)]
 CLIENTS = set()
 FAVICONS = ('favicon', 'apple-touch-icon')
+SUPPORTED.extend(['ping', 'pong'])
+PINGS = {
+    'sent': [],
+    'received': []
+}
 
 # pylint: disable=consider-using-f-string
 
@@ -91,6 +96,9 @@ def handler(connection):
     # pylint: disable=too-many-nested-blocks
     while True: # receive keyhits and dispatch them back out to all threads
         try:
+            if PINGS['received']:
+                connection.send(package(PINGS['received'][-1]), 'pong')
+                PINGS['received'][:] = []  # erase this and any prior pings
             logging.debug('awaiting packet on %s', connection)
             packet = packet or connection.recv(MAXPACKET)
             offset = 0
@@ -147,7 +155,22 @@ def handler(connection):
                     logging.warning('client closed connection: %d, %s',
                                     code, reason)
                     raise StopIteration('remote end initiated closure')
-                if payload == b'stop':
+                if opcode == 'ping':
+                    if len(payload) <= 125:
+                        PINGS['received'].append(payload)
+                    else:
+                        logging.error('ping payload must not exceed 125 bytes')
+                elif opcode == 'pong':
+                    if PINGS['sent']:
+                        if payload != PINGS['sent'][-1]:
+                            logging.error(
+                                'pong payload %s does not match our ping %s',
+                                payload, PINGS['sent'][-1]
+                            )
+                    else:
+                        logging.warning('pong %s unsolicited', payload)
+                    PINGS['sent'][:] = []  # erase any sent pings
+                elif payload == b'stop':
                     connection.send(package(
                         CLOSE.to_bytes(2, 'big') +
                             b"server closed on client's request",

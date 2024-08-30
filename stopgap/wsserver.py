@@ -38,7 +38,7 @@ OPCODE = {
 }
 # allow reverse lookup, mapping (unique) opcode string to text
 OPCODE.update(dict(map(reversed, OPCODE.items())))
-SUPPORTED = ('text', 'binary', 'close')
+SUPPORTED = ['text', 'binary', 'close']
 MAXPACKET = 4096000  # quit on any packets this size or greater
 MAX_RETRIES = 3
 RESPONSE = (
