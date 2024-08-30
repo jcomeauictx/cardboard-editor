@@ -84,6 +84,8 @@ window.addEventListener("load", function() {
         [A|_|C|_|E|F]: 39, // "and "
         [_|B|C|D|_|F]: 40, // "with "
         [A|_|C|D|E|_]: 41, // "to "
+        // adding special "characters" to GKOS mapping
+        [A|B|C|_|_|_]: 127, // Backspace
     };
     const baseChars = {
         // in the following, \0 is placeholder for "",
@@ -119,8 +121,11 @@ window.addEventListener("load", function() {
             91: "Th", 92: "That ", 93: "The ", 94: "Of ",
             103: "And ", 104: "With ", 105: "To "
         },
+        special: {
+            127: "Backspace",
+        }
     };
-    GKOS.english = Object.assign({}, GKOS.latin, patch.english);
+    GKOS.english = Object.assign({}, GKOS.latin, patch.english, patch.special);
     console.debug("characters available: " + JSON.stringify(GKOS.english));
     class KeyDown extends KeyboardEvent {
         constructor(key, code, serial, keytype) {
