@@ -86,6 +86,7 @@ window.addEventListener("load", function() {
         [A|_|C|D|E|_]: 41, // "to "
         // adding special "characters" to GKOS mapping
         [A|B|C|_|_|_]: 127, // Backspace
+        [A|B|_|D|E|F]: 126, // Enter
     };
     const baseChars = {
         // in the following, \0 is placeholder for "",
@@ -123,6 +124,7 @@ window.addEventListener("load", function() {
         },
         special: {
             127: "Backspace",
+            126: "Enter",
         }
     };
     GKOS.english = Object.assign({}, GKOS.latin, patch.english, patch.special);
@@ -260,8 +262,14 @@ window.addEventListener("load", function() {
             } else {
                 // hardware key, or platform-supplied softkey
                 console.debug("tunneled key '" + key + "', using verbatim");
-                deleteSelected();
-                insertString(key);
+                if (specialKeys[key]) {
+                    console.debug("processing special key " + key);
+                    specialKeys[key]();
+                } else {
+                    deleteSelected();
+                    console.debug("inserting character '" + key + "'");
+                    insertString(key);
+                }
             }
         } else if (event.code === "") {
             console.debug("test key: '" + event.key + "'");
