@@ -19,3 +19,4 @@ the same on Android with Chrome.
 * Serializing keyhits on each device won't work, need to do it in the server.
 * Websocket is closing unexpectedly; need to implement ping/pong?
 * Multi-touch with [touch events](https://developer.mozilla.org/en-US/docs/Web/API/Touch_events/Multi-touch_interaction) and [pointer events](https://developer.mozilla.org/en-US/docs/Web/API/Pointer_events/Multi-touch_interaction)
+* [Writing WebSocket servers](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers)
