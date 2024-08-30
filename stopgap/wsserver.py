@@ -39,7 +39,7 @@ OPCODE = {
 # allow reverse lookup, mapping (unique) opcode string to text
 OPCODE.update(dict(map(reversed, OPCODE.items())))
 SUPPORTED = ('text', 'binary', 'close')
-MAXPACKET = 4096  # quit on any packets this size or greater
+MAXPACKET = 4096000  # quit on any packets this size or greater
 MAX_RETRIES = 3
 RESPONSE = (
     b'HTTP/1.1 101 Switching Protocols\r\n'
@@ -213,12 +213,25 @@ def demo(connection):
 def package(payload, opcode='text'):
     '''
     wrap payload in websocket packet
-
-    assumes plain text and short message, doesn't do any checking
     '''
     length = len(payload)
-    packed = bytes((FIN | OPCODE[opcode], length)) + payload
-    logging.debug('package being sent: %s', packed)
+    if length <= 125:
+        packed = bytes((FIN | OPCODE[opcode], length)) + payload
+        logging.debug('package being sent: %s', packed)
+    elif length <= 65535:  # 16 bits
+        packed = (
+            bytes((FIN | OPCODE[opcode], 126)) + length.to_bytes(2, 'big') +
+            payload
+        )
+        logging.debug('package being sent: %s...', packed[:128])
+    elif length < MAXPACKET - 10:  # 10 bytes for header
+        packed = (
+            bytes((FIN | OPCODE[opcode], 127)) + length.to_bytes(8, 'big') +
+            payload
+        )
+        logging.debug('package being sent: %s...', packed[:128])
+    else:
+        raise BufferError('Package length of %d not permitted' % length)
     return packed
 
 if __name__ == '__main__':

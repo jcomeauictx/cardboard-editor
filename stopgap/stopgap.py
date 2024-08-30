@@ -113,11 +113,17 @@ def handler(connection):
                     logging.error('unmasked client data violates standard')
                     raise NotImplementedError('unmasked data not supported')
                 payload_size = packet[offset + 1] & PAYLOAD_SIZE
-                if payload_size > 125:
-                    logging.error('we only support small messages')
-                    logging.error('offending size: %d', payload_size)
-                    raise ValueError('message too large')
-                offset = 2  # move to masking key
+                offset += 2  # move to masking key (for short payload anyway)
+                if payload_size == 126:
+                    payload_size = int.from_bytes(
+                        packet[offset + 2:offset + 4], 'big'
+                    )
+                    offset += 2
+                elif payload_size == 127:
+                    payload_size = int.from_bytes(
+                        packet[offset + 2: offset + 6], 'big'
+                    )
+                    offset += 4
                 masking_key = packet[offset:offset + 4]
                 logging.debug('masking key: %s', masking_key)
                 offset += 4  # skip past masking key to payload
