@@ -17,6 +17,7 @@ CLIENTS = set()
 FAVICONS = ('favicon', 'apple-touch-icon')
 SUPPORTED.extend(['ping', 'pong'])
 PINGS = {
+    'serial': 0,
     'sent': [],
     'received': []
 }
@@ -94,6 +95,7 @@ def handler(connection):
     packet = b''
     serial = 0  # serial number for keyhits
     # pylint: disable=too-many-nested-blocks
+    ping(connection)  # send a ping to break the ice
     while True: # receive keyhits and dispatch them back out to all threads
         try:
             if PINGS['received']:
@@ -158,6 +160,7 @@ def handler(connection):
                 if opcode == 'ping':
                     if len(payload) <= 125:
                         PINGS['received'].append(payload)
+                        PINGS['received'][0:-2] = []  # only keep last 2
                     else:
                         logging.error('ping payload must not exceed 125 bytes')
                 elif opcode == 'pong':
@@ -167,6 +170,8 @@ def handler(connection):
                                 'pong payload %s does not match our ping %s',
                                 payload, PINGS['sent'][-1]
                             )
+                        else:
+                            logging.info('received pong for ping %s', payload)
                     else:
                         logging.warning('pong %s unsolicited', payload)
                     PINGS['sent'][:] = []  # erase any sent pings
@@ -287,6 +292,16 @@ def pack(message_dict):
     pack message, passed as dict, into shortest possible JSON bytestring
     '''
     return json.dumps(message_dict, separators=(',', ':')).encode()
+
+def ping(connection):
+    '''
+    send ping packet
+    '''
+    payload = str(PINGS['serial']).encode()
+    PINGS['serial'] += 1
+    connection.send(package(payload, 'ping'))
+    PINGS['sent'].append(payload)
+    PINGS['sent'][0:-2] = []  # only keep last 2
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG if __debug__ else logging.INFO)
