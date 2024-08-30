@@ -211,8 +211,15 @@ def demo(connection):
             time.sleep(1)
 
 def package(payload, opcode='text'):
-    '''
+    r'''
     wrap payload in websocket packet
+
+    >>> package(bytes(10))
+    b'\x81\n\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+    >>> package(bytes(1000))[:12]
+    b'\x81~\x03\xe8\x00\x00\x00\x00\x00\x00\x00\x00'
+    >>> package(bytes(100000))[:12]
+    b'\x81\x7f\x00\x00\x00\x00\x00\x01\x86\xa0\x00\x00'
     '''
     length = len(payload)
     if length <= 125:

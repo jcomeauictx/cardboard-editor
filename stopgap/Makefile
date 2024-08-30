@@ -62,7 +62,7 @@ ifneq ($(SHOWENV),)
 else
 	export LOCAL
 endif
-all: lint stop credentials create_ap httpserver
+all: lint doctest stop credentials create_ap httpserver
 iphone:
 	$(MAKE) LOCAL=127.0.0.1 stop httpserver
 xtest: xtest.py
@@ -124,6 +124,8 @@ wstest.new:
 	$(MAKE) SERVER=WSSERVER httpserver
 %.pylint: %.py
 	$(PYLINT) $<
+%.doctest: %.py
+	$(PYTHON) -m doctest $<
 %.jslint: %.js
 	$(JSLINT) $<
 %.html.weblint: %.html
@@ -131,6 +133,7 @@ wstest.new:
 %.css.weblint: %.css
 	$(VALIDATE) --css $<
 pylint: $(SCRIPTS:.py=.pylint)
+doctest: $(SCRIPTS:.py=.doctest)
 eslint: $(JSCRIPTS:.js=.jslint)
 weblint: $(HTML:.html=.html.weblint) $(CSS:.css=.css.weblint)
 lint: pylint eslint weblint
