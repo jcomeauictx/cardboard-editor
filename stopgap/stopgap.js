@@ -353,6 +353,8 @@ window.addEventListener("load", function() {
         sendKey(character, character, null, direction, keytype);
     };
     const backspace = function(event) {
+        console.debug("Backspace received with caretPosition " +
+                      JSON.stringify(caretPosition));
         const selected = caretPosition.end - caretPosition.start;
         // if there is selected text already, simply remove it on backspace
         // otherwise "select" the final character and remove it.
