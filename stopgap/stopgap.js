@@ -42,51 +42,33 @@ window.addEventListener("load", function() {
     // X (64) and Y (128) are not keys, but chord offsets
     const X = 0x40;
     const Y = 0x80;
-    const mapping = { // chords to character indices
-        [A]: 1, // a
-        [B]: 2, // b
-        [C]: 3, // c
-        [D]: 4, // d
-        [E]: 5, // e
-        [F]: 6, // f
-        [_|_|_|D|E|_]: 7, // g
-        [A|_|_|D|E|_]: 8, // h
-        [_|B|_|D|E|_]: 9, // i
-        [_|_|C|D|E|_]: 10, // j
-        [_|_|_|_|E|F]: 11, // k
-        [A|_|_|_|E|F]: 12, // l
-        [_|B|_|_|E|F]: 13, // m
-        [_|_|C|_|E|F]: 14, // n
-        [A|B|_|_|_|_]: 15, // o
-        [A|B|_|D|_|_]: 16, // p
-        [A|B|_|_|E|_]: 17, // q
-        [A|B|_|_|_|F]: 18, // r
-        [_|B|C|_|_|_]: 19, // s
-        [_|B|C|D|_|_]: 20, // t
-        [_|B|C|_|E|_]: 21, // u
-        [_|B|C|_|_|F]: 22, // v
-        [_|_|_|D|_|F]: 23, // w
-        [A|_|_|D|_|F]: 24, // x
-        [_|B|_|D|_|F]: 25, // y
-        [_|_|C|D|_|F]: 26, // z
-        [A|_|C|_|_|_]: 27, // th
-        [A|_|C|D|_|_]: 28, // "that "
-        [A|_|C|_|E|_]: 29, // "the "
-        [A|_|C|_|_|F]: 30, // "of "
-        [_|B|_|_|_|F]: 31, // .
-        [_|_|C|_|E|_]: 32, // ,
-        [_|_|C|D|_|_]: 33, // !
-        [A|_|_|_|_|F]: 34, // ?
-        [A|_|_|_|E|_]: 35, // -
-        [_|B|_|D|_|_]: 36, // '
-        [A|B|_|_|E|F]: 37, // \
-        [_|B|C|D|E|_]: 38, // /
-        [A|_|C|_|E|F]: 39, // "and "
-        [_|B|C|D|_|F]: 40, // "with "
-        [A|_|C|D|E|_]: 41, // "to "
-        // adding special "characters" to GKOS mapping
-        [A|B|C|_|_|_]: 127, // Backspace
-        [A|B|_|D|E|F]: 126, // Enter
+    const mapping = { // chords to characters (GKOS standard for English)
+        /* NOTE: I'm using END (cf. 'End') for what looks like a "Play" button
+           in the GKOS test page, and HOME for its reverse. Neither does
+           anything in the test page, so I'm not sure of their intended
+           purposes */
+        [_]: '', [A]: 'a', [B]: 'b', [A|B]: 'o', 
+        [C]: 'c', [A|_|C]: 'th', [B|C]: 's', [A|B|C]: 'Backspace',
+        [D]: 'd', [A|_|_|D]: 'Up', [B|_|D]: "'", [A|B|_|D]: 'p',
+        [C|D]: '!', [A|_|C|D]: 'that ', [B|C|D]: 't', [A|B|C|D]: 'Left',
+        [E]: 'e', [A|_|_|_|E]: '-', [B|_|_|E]: 'SHIFT', [A|B|_|_|E]: 'q',
+        [C|_|E]: ',', [A|_|C|_|E]: 'the ', [B|C|_|E]: 'u', [A|B|C|_|E]: 'HOME',
+        [D|E]: 'g', [A|_|_|D|E]: 'h', [B|_|D|E]: 'i', [A|B|_|D|E]: 'PgUp',
+        [C|D|E]: 'j', [A|_|C|D|E]: 'to ', [B|C|D|E]: '/', [A|B|C|D|E]: 'Esc',
+        [F]: 'f', [A|_|_|_|_|F]: '?', [B|_|_|_|F]: '.', [A|B|_|_|_|F]: 'r',
+        [C|_|_|F]: 'Down', [A|_|C|_|_|F]: 'of ',
+        [B|C|_|_|F]: 'v', [A|B|C|_|_|F]: 'Home',
+        [D|_|F]: 'w', [A|_|_|D|_|F]: 'x',
+        [B|_|D|_|F]: 'y', [A|B|_|D|_|F]: 'Ins',
+        [C|D|_|F]: 'z', [A|_|C|D|_|F]: 'SYMB',
+        [B|C|D|_|F]: 'with ', [A|B|C|D|_|F]: 'Ctrl',
+        [E|F]: 'k', [A|_|_|_|E|F]: 'l', [B|_|_|E|F]: 'm', [A|B|_|_|E|F]: '\\',
+        [C|_|E|F]: 'n', [A|_|C|_|E|F]: 'and ',
+        [B|C|_|E|F]: 'PgDn', [A|B|C|_|E|F]: 'Alt',
+        [D|E|F]: ' ', [A|_|_|D|E|F]: 'Right',
+        [B|_|D|E|F]: 'END', [A|B|_|D|E|F]: 'Enter',
+        [C|D|E|F]: 'End', [A|_|C|D|E|F]: 'Tab',
+        [B|C|D|E|F]: 'Delete', [A|B|C|D|E|F]: 'ABC123' // toggle numbers mode
     };
     const baseChars = {
         // in the following, \0 is placeholder for "",
@@ -300,8 +282,7 @@ window.addEventListener("load", function() {
         if (event.serial) {
             const key = event.key;
             if (readyToRead) {
-                const index = mapping[untimedChord] || 0;
-                const character = GKOS.english[index] || '';
+                const character = mapping[untimedChord] || '';
                 readyToRead = false;
                 untimedChord = 0;
                 if (specialKeys[character]) {
