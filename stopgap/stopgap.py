@@ -92,7 +92,7 @@ def handler(connection):
     # pylint: disable=too-many-locals, too-many-branches, too-many-statements
     logging.debug('thread starting handle(%s)', connection)
     opcode = None
-    packet = b''
+    previous = packet = b''
     serial = 0  # serial number for keyhits
     # pylint: disable=too-many-nested-blocks
     ping(connection)  # send a ping to break the ice
@@ -102,7 +102,9 @@ def handler(connection):
                 connection.send(package(PINGS['received'][-1]), 'pong')
                 PINGS['received'][:] = []  # erase this and any prior pings
             logging.debug('awaiting packet on %s', connection)
-            packet = packet or connection.recv(MAXPACKET)
+            # attempted fix for when we get a truncated packet with only
+            # the first two bytes, as happened in commit 17aed9a3
+            packet = packet or (previous + connection.recv(MAXPACKET))
             logging.debug('packet: %s...', packet[:64])
             offset = 0
             serialized = None  # for joining key with serial number
@@ -139,14 +141,19 @@ def handler(connection):
                 logging.debug('masking key: %s', masking_key)
                 offset += 4  # skip past masking key to payload
                 payload = bytearray(packet[offset:])
-                if len(payload) != payload_size:
+                if len(payload) > payload_size:
                     logging.error('payload unexpected size: %s', payload)
                     logging.info('assuming we got more than one packet')
                     # split off additional packet[s]
                     packet = bytes(payload[payload_size:])
                     payload = payload[:payload_size]
-                else:
+                    previous = b''
+                elif len(payload) < payload_size:
+                    logging.error('received truncated packet %s', packet)
+                    previous = packet
                     packet = b''
+                else:
+                    previous = packet = b''
                 for i in range(payload_size):
                     payload[i] = payload[i] ^ masking_key[i % 4]
                 logging.info('payload: %s', payload)
