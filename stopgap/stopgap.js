@@ -417,6 +417,8 @@ window.addEventListener("load", function() {
                 button.addEventListener("pointerleave", cancel);
                 button.addEventListener("pointercancel", cancel);
                 button.addEventListener("pointerout", cancel);
+                // in case none of the above do anything, at least log it
+                button.addEventListener("click", noop);
             } else {
                 button.addEventListener("click", chordKeyClick);
             }
