@@ -349,7 +349,7 @@ window.addEventListener("load", function() {
         if (caretPosition.end > 0) deleteSelected();
     };
     const noop = function(event) {
-        console.debug("ignoring " + event.key);
+        console.debug("ignoring event " + event + ", target: " + event.target);
     };
     const GKOSKeys = {
         a: {
@@ -423,6 +423,7 @@ window.addEventListener("load", function() {
                 button.addEventListener("pointercancel", cancel);
                 button.addEventListener("pointerout", cancel);
                 // in case none of the above do anything, at least log it
+                button.addEventListener("mousedown", noop);
                 button.addEventListener("click", noop);
             } else {
                 button.addEventListener("click", chordKeyClick);
