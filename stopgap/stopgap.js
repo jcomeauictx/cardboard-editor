@@ -349,8 +349,12 @@ window.addEventListener("load", function() {
         if (caretPosition.end > 0) deleteSelected();
     };
     const noop = function(event) {
-        console.debug("ignoring event " + JSON.stringify(event) +
-                      ", target: " + JSON.stringify(event.target));
+        console.debug(
+                    "ignoring event " + event +
+                    "(" + JSON.stringify(event) + ")" +
+                    ", target: " + target +
+                    "(" + JSON.stringify(event.target) + ")"
+        );
     };
     const GKOSKeys = {
         a: {
@@ -423,8 +427,13 @@ window.addEventListener("load", function() {
                 button.addEventListener("pointerleave", cancel);
                 button.addEventListener("pointercancel", cancel);
                 button.addEventListener("pointerout", cancel);
+                // in case those don't work, use mouse events
+                // however, they're unlikely to work on more than one
+                // button at a time
+                button.addEventListener("mousedown", chordKeyDown);
+                button.addEventListener("mouseup", chordKeyUp);
+                button.addEventListener("mouseleave", cancel);
                 // in case none of the above do anything, at least log it
-                button.addEventListener("mousedown", noop);
                 button.addEventListener("click", noop);
             } else {
                 button.addEventListener("click", chordKeyClick);
