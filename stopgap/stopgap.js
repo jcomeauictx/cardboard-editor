@@ -47,29 +47,35 @@ window.addEventListener("load", function() {
            in the GKOS test page, and HOME for its reverse. Neither does
            anything in the test page, so I'm not sure of their intended
            purposes */
-        [_]: '', [A]: 'a', [B]: 'b', [A|B]: 'o', 
-        [C]: 'c', [A|_|C]: 'th', [B|C]: 's', [A|B|C]: 'Backspace',
-        [D]: 'd', [A|_|_|D]: 'Up', [B|_|D]: "'", [A|B|_|D]: 'p',
-        [C|D]: '!', [A|_|C|D]: 'that ', [B|C|D]: 't', [A|B|C|D]: 'Left',
-        [E]: 'e', [A|_|_|_|E]: '-', [B|_|_|E]: 'SHIFT', [A|B|_|_|E]: 'q',
-        [C|_|E]: ',', [A|_|C|_|E]: 'the ', [B|C|_|E]: 'u', [A|B|C|_|E]: 'HOME',
-        [D|E]: 'g', [A|_|_|D|E]: 'h', [B|_|D|E]: 'i', [A|B|_|D|E]: 'PgUp',
-        [C|D|E]: 'j', [A|_|C|D|E]: 'to ', [B|C|D|E]: '/', [A|B|C|D|E]: 'Esc',
-        [F]: 'f', [A|_|_|_|_|F]: '?', [B|_|_|_|F]: '.', [A|B|_|_|_|F]: 'r',
-        [C|_|_|F]: 'Down', [A|_|C|_|_|F]: 'of ',
-        [B|C|_|_|F]: 'v', [A|B|C|_|_|F]: 'Home',
-        [D|_|F]: 'w', [A|_|_|D|_|F]: 'x',
-        [B|_|D|_|F]: 'y', [A|B|_|D|_|F]: 'Ins',
-        [C|D|_|F]: 'z', [A|_|C|D|_|F]: 'SYMB',
-        [B|C|D|_|F]: 'with ', [A|B|C|D|_|F]: 'Ctrl',
-        [E|F]: 'k', [A|_|_|_|E|F]: 'l', [B|_|_|E|F]: 'm', [A|B|_|_|E|F]: '\\',
-        [C|_|E|F]: 'n', [A|_|C|_|E|F]: 'and ',
-        [B|C|_|E|F]: 'PgDn', [A|B|C|_|E|F]: 'Alt',
-        [D|E|F]: ' ', [A|_|_|D|E|F]: 'Right',
-        [B|_|D|E|F]: 'END', [A|B|_|D|E|F]: 'Enter',
-        [C|D|E|F]: 'End', [A|_|C|D|E|F]: 'Tab',
-        [B|C|D|E|F]: 'Delete', [A|B|C|D|E|F]: 'ABC123' // toggle numbers mode
+        '_': '', 'A': 'a', 'B': 'b', 'A|B': 'o', 
+        'C': 'c', 'A|_|C': 'th', 'B|C': 's', 'A|B|C': 'Backspace',
+        'D': 'd', 'A|_|_|D': 'Up', 'B|_|D': "'", 'A|B|_|D': 'p',
+        'C|D': '!', 'A|_|C|D': 'that ', 'B|C|D': 't', 'A|B|C|D': 'Left',
+        'E': 'e', 'A|_|_|_|E': '-', 'B|_|_|E': 'SHIFT', 'A|B|_|_|E': 'q',
+        'C|_|E': ',', 'A|_|C|_|E': 'the ', 'B|C|_|E': 'u', 'A|B|C|_|E': 'HOME',
+        'D|E': 'g', 'A|_|_|D|E': 'h', 'B|_|D|E': 'i', 'A|B|_|D|E': 'PgUp',
+        'C|D|E': 'j', 'A|_|C|D|E': 'to ', 'B|C|D|E': '/', 'A|B|C|D|E': 'Esc',
+        'F': 'f', 'A|_|_|_|_|F': '?', 'B|_|_|_|F': '.', 'A|B|_|_|_|F': 'r',
+        'C|_|_|F': 'Down', 'A|_|C|_|_|F': 'of ',
+        'B|C|_|_|F': 'v', 'A|B|C|_|_|F': 'Home',
+        'D|_|F': 'w', 'A|_|_|D|_|F': 'x',
+        'B|_|D|_|F': 'y', 'A|B|_|D|_|F': 'Ins',
+        'C|D|_|F': 'z', 'A|_|C|D|_|F': 'SYMB',
+        'B|C|D|_|F': 'with ', 'A|B|C|D|_|F': 'Ctrl',
+        'E|F': 'k', 'A|_|_|_|E|F': 'l', 'B|_|_|E|F': 'm', 'A|B|_|_|E|F': '\\',
+        'C|_|E|F': 'n', 'A|_|C|_|E|F': 'and ',
+        'B|C|_|E|F': 'PgDn', 'A|B|C|_|E|F': 'Alt',
+        'D|E|F': ' ', 'A|_|_|D|E|F': 'Right',
+        'B|_|D|E|F': 'END', 'A|B|_|D|E|F': 'Enter',
+        'C|D|E|F': 'End', 'A|_|C|D|E|F': 'Tab',
+        'B|C|D|E|F': 'Delete', 'A|B|C|D|E|F': 'ABC123' // toggle numbers mode
     };
+    // for ES6 we could have used [D|E|F] etc., above but not for ES5.
+    // so we add the *real* keys now, using eval.
+    Object.keys(mapping).forEach(function(key) {
+        mapping[eval(key)] = mapping[key];
+    });
+    console.debug("mapping: " + JSON.stringify(mapping));
     const baseChars = {
         // in the following, \0 is placeholder for "",
         // \v for multi-character entries such as "that ", "the ", ...
@@ -110,7 +116,6 @@ window.addEventListener("load", function() {
         }
     };
     GKOS.english = Object.assign({}, GKOS.latin, patch.english, patch.special);
-    console.debug("characters available: " + JSON.stringify(GKOS.english));
     class KeyDown extends KeyboardEvent {
         constructor(key, code, serial, keytype) {
             super("keydown", {key: key, code: code});
