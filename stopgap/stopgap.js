@@ -47,7 +47,7 @@ window.addEventListener("load", function() {
            in the GKOS test page, and HOME for its reverse. Neither does
            anything in the test page, so I'm not sure of their intended
            purposes */
-        '_': '', 'A': 'a', 'B': 'b', 'A|B': 'o', 
+        '_': '', 'A': 'a', 'B': 'b', 'A|B': 'o',
         'C': 'c', 'A|_|C': 'th', 'B|C': 's', 'A|B|C': 'Backspace',
         'D': 'd', 'A|_|_|D': 'Up', 'B|_|D': "'", 'A|B|_|D': 'p',
         'C|D': '!', 'A|_|C|D': 'that ', 'B|C|D': 't', 'A|B|C|D': 'Left',
@@ -349,7 +349,8 @@ window.addEventListener("load", function() {
         if (caretPosition.end > 0) deleteSelected();
     };
     const noop = function(event) {
-        console.debug("ignoring event " + event + ", target: " + event.target);
+        console.debug("ignoring event " + JSON.stringify(event) +
+                      ", target: " + JSON.stringify(event.target));
     };
     const GKOSKeys = {
         a: {
