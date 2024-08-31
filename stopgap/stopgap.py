@@ -103,6 +103,7 @@ def handler(connection):
                 PINGS['received'][:] = []  # erase this and any prior pings
             logging.debug('awaiting packet on %s', connection)
             packet = packet or connection.recv(MAXPACKET)
+            logging.debug('packet: %s...', packet[:64])
             offset = 0
             serialized = None  # for joining key with serial number
             if len(packet) >= 2:
