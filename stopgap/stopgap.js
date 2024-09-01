@@ -47,33 +47,80 @@ window.addEventListener("load", function() {
            in the GKOS test page, and HOME for its reverse. Neither does
            anything in the test page, so I'm not sure of their intended
            purposes */
-        '_': '', 'A': 'a', 'B': 'b', 'A|B': 'o',
-        'C': 'c', 'A|_|C': 'th', 'B|C': 's', 'A|B|C': 'Backspace',
-        'D': 'd', 'A|_|_|D': 'Up', 'B|_|D': "'", 'A|B|_|D': 'p',
-        'C|D': '!', 'A|_|C|D': 'that ', 'B|C|D': 't', 'A|B|C|D': 'Left',
-        'E': 'e', 'A|_|_|_|E': '-', 'B|_|_|E': 'SHIFT', 'A|B|_|_|E': 'q',
-        'C|_|E': ',', 'A|_|C|_|E': 'the ', 'B|C|_|E': 'u', 'A|B|C|_|E': 'HOME',
-        'D|E': 'g', 'A|_|_|D|E': 'h', 'B|_|D|E': 'i', 'A|B|_|D|E': 'PgUp',
-        'C|D|E': 'j', 'A|_|C|D|E': 'to ', 'B|C|D|E': '/', 'A|B|C|D|E': 'Esc',
-        'F': 'f', 'A|_|_|_|_|F': '?', 'B|_|_|_|F': '.', 'A|B|_|_|_|F': 'r',
-        'C|_|_|F': 'Down', 'A|_|C|_|_|F': 'of ',
-        'B|C|_|_|F': 'v', 'A|B|C|_|_|F': 'Home',
-        'D|_|F': 'w', 'A|_|_|D|_|F': 'x',
-        'B|_|D|_|F': 'y', 'A|B|_|D|_|F': 'Ins',
-        'C|D|_|F': 'z', 'A|_|C|D|_|F': 'SYMB',
-        'B|C|D|_|F': 'with ', 'A|B|C|D|_|F': 'Ctrl',
-        'E|F': 'k', 'A|_|_|_|E|F': 'l', 'B|_|_|E|F': 'm', 'A|B|_|_|E|F': '\\',
-        'C|_|E|F': 'n', 'A|_|C|_|E|F': 'and ',
-        'B|C|_|E|F': 'PgDn', 'A|B|C|_|E|F': 'Alt',
-        'D|E|F': ' ', 'A|_|_|D|E|F': 'Right',
-        'B|_|D|E|F': 'END', 'A|B|_|D|E|F': 'Enter',
-        'C|D|E|F': 'End', 'A|_|C|D|E|F': 'Tab',
-        'B|C|D|E|F': 'Delete', 'A|B|C|D|E|F': 'ABC123' // toggle numbers mode
+        '_|_|_|_|_|_': ['', '', '', ''],
+        'A|_|_|_|_|_': ['a', 'A', '1', '1'],
+        'B|_|_|_|_|_': ['b', 'B', '2', '2'],
+        'A|B|_|_|_|_': ['o', 'O', '+', '+'],
+        '_|_|C|_|_|_': ['c', 'C', '3', '3'],
+        'A|_|C|_|_|_': ['th', 'Th', ')', ')'],
+        '_|B|C|_|_|_': ['s', 'S', '*', '*'],
+        'A|B|C|_|_|_': ['Backspace', 'Backspace', 'Backspace', 'Backspace'],
+        '_|_|_|D|_|_': ['d', 'D', '4', '4'],
+        'A|_|_|D|_|_': ['Up', 'Up', 'Up', 'Up'],
+        '_|B|_|D|_|_': ["'", '"', "'", '"'],
+        'A|B|_|D|_|_': ['p', 'P', '%', '%'],
+        '_|_|C|D|_|_': ['!', '|', '!', '|'],
+        'A|_|C|D|_|_': ['that ', 'That ', ']', ']'],
+        '_|B|C|D|_|_': ['t', 'T', '$', '$'],
+        'A|B|C|D|_|_': ['Left', 'Left', 'Left', 'Left'],
+        '_|_|_|_|E|_': ['e', 'E', '5', '5'],
+        'A|_|_|_|E|_': ['-', '_', '-', '_'],
+        '_|B|_|_|E|_': ['SHIFT', 'SHIFT', 'SHIFT', 'SHIFT'],
+        'A|B|_|_|E|_': ['q', 'Q', '=', '='],
+        '_|_|C|_|E|_': [',', ';', ',', ';'],
+        'A|_|C|_|E|_': ['the ', 'The ', '>', '>'],
+        '_|B|C|_|E|_': ['u', 'U', '€', '€'],
+        'A|B|C|_|E|_': ['HOME', 'HOME', 'HOME', 'HOME'],
+        '_|_|_|D|E|_': ['g', 'G', '0', '0'],
+        'A|_|_|D|E|_': ['h', 'H', '7', '7'],
+        '_|B|_|D|E|_': ['i', 'I', '8', '8'],
+        'A|B|_|D|E|_': ['PgUp', 'PgUp', 'PgUp', 'PgUp'],
+        '_|_|C|D|E|_': ['j', 'J', '9', '9'],
+        'A|_|C|D|E|_': ['to ', 'To ', '', '\u030c'],
+        '_|B|C|D|E|_': ['/', '\u0301', '/', '\u0301'], // forward slash, accent
+        'A|B|C|D|E|_': ['Esc', 'Esc', 'Esc', 'Esc'],
+        '_|_|_|_|_|F': ['f', 'F', '6', '6'],
+        'A|_|_|_|_|F': ['?', '~', '?', '~'],
+        '_|B|_|_|_|F': ['.', ':', '.', ':'],
+        'A|B|_|_|_|F': ['r', 'R', '^', '^'],
+        '_|_|C|_|_|F': ['Down', 'Down', 'Down', 'Down'],
+        'A|_|C|_|_|F': ['of ', 'Of ', '}', '}'],
+        '_|B|C|_|_|F': ['v', 'V', '£', '£'],
+        'A|B|C|_|_|F': ['Home', 'Home', 'Home', 'Home'],
+        '_|_|_|D|_|F': ['w', 'W', '(', '('],
+        'A|_|_|D|_|F': ['x', 'X', '[', '['],
+        '_|B|_|D|_|F': ['y', 'Y', '<', '<'],
+        'A|B|_|D|_|F': ['Ins', 'Ins', 'Ins', '°'],
+        '_|_|C|D|_|F': ['z', 'Z', '{', '{'],
+        'A|_|C|D|_|F': ['SYMB', 'SYMB', 'SYMB', 'SYMB'],
+        '_|B|C|D|_|F': ['with ', 'With ', '§', '§'],
+        'A|B|C|D|_|F': ['Ctrl', 'Ctrl', 'Ctrl', 'Ctrl'],
+        '_|_|_|_|E|F': ['k', 'K', '#', '#'],
+        'A|_|_|_|E|F': ['l', 'L', '@', '@'],
+        '_|B|_|_|E|F': ['m', 'M', '½', '½'],
+        'A|B|_|_|E|F': ['\\', '\u0300', '\\', '\u0300'], // back slash, accent
+        '_|_|C|_|E|F': ['n', 'N', '&', '&'],
+        'A|_|C|_|E|F': ['and ', 'And ', 'μ', 'μ'],
+        '_|B|C|_|E|F': ['PgDn', 'PgDn', 'PgDn', 'PgDn'],
+        'A|B|C|_|E|F': ['Alt', 'Alt', 'Alt', 'Alt'],
+        '_|_|_|D|E|F': [' ', ' ', ' ', ' '], // original GKOS [' ', '', '', '']
+        'A|_|_|D|E|F': ['Right', 'Right', 'Right', 'Right'],
+        '_|B|_|D|E|F': ['END', 'END', 'END', 'END'],
+        'A|B|_|D|E|F': ['Enter', 'Enter', 'Enter', 'Enter'],
+        '_|_|C|D|E|F': ['End', 'End', 'End', 'End'],
+        'A|_|C|D|E|F': ['\t', '\t', '\t', '\t'], // Tab
+        '_|B|C|D|E|F': ['Delete', 'Delete', 'Delete', 'Delete'],
+        'A|B|C|D|E|F': ['ABC123', 'ABC123', 'ABC123', 'ABC123']
     };
     // for ES6 we could have used [D|E|F] etc., above but not for ES5.
     // so we add the *real* keys now, using eval.
     Object.keys(mapping).forEach(function(key) {
-        mapping[eval(key)] = mapping[key];
+        const value = eval(key); // bit-OR the values together
+        mapping[value] = mapping[key][0];
+        mapping[value | X] = mapping[key][1]; // shifted
+        mapping[value | Y] = mapping[key][2]; // numbers mode
+        mapping[value | X | Y] = mapping[key][3]; // SYMBols mode
+        delete mapping[key]; // no more need for text key
     });
     console.debug("mapping: " + JSON.stringify(mapping));
     const baseChars = {
