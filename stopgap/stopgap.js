@@ -2,7 +2,7 @@ window.addEventListener("load", function() {
     /* eventually we probably could/should eliminate the textarea altogether
        and just use the background div, vastly simplifying the code. but
        during development, I want to compare how well my code mirrors the
-       native native handling of keypress events by textarea. */
+       native handling of keypress events by textarea. */
     const phases = {
         0: "NONE",
         1: "CAPTURING",
@@ -123,46 +123,6 @@ window.addEventListener("load", function() {
         delete mapping[key]; // no more need for text key
     });
     console.debug("mapping: " + JSON.stringify(mapping));
-    const baseChars = {
-        // in the following, \0 is placeholder for "",
-        // \v for multi-character entries such as "that ", "the ", ...
-        lower:
-            "\0abcdefghijklmnopqrstuvwxyz\v\v\v\v." +
-            ",!?-'\\/\v\v\v\0\0\0\0\0\0\0\0 \0\0\0\0\t\0\0\0\0\0\0\0\0",
-        upper:
-            "\0ABCDEFGHIJKLMNOPQRSTUVWXYZ\v\v\v\v:" +
-            ';|~_"\u0300\u0301' +
-            "\v\v\v\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
-        symbolsLower:
-            "\x001234560789#@½&+%=^*$€£([<{)]>}." +
-            ",!?-'\\/μ§\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
-        symbolsUpper:
-            "\x001234560789#@½&+%=^*$€£([<{)]>}:" +
-            ';|~_"\u0300\u0301μ§\u030c' +
-            "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0°\0\0\0\0\0"
-    };
-    const GKOS = {
-        latin: Object.fromEntries(Array.from(
-                baseChars.lower + baseChars.upper +
-                baseChars.symbolsLower + baseChars.symbolsUpper
-            ).map(function(value, key) {
-                return [key, value == "\0" ? "" : value];
-            })
-        )
-    };
-    const patch = {
-        english: {
-            27: "th", 28: "that ", 29: "the ", 30: "of ",
-            39: "and ", 40: "with ", 41: "to ",
-            91: "Th", 92: "That ", 93: "The ", 94: "Of ",
-            103: "And ", 104: "With ", 105: "To "
-        },
-        special: {
-            127: "Backspace",
-            126: "Enter",
-        }
-    };
-    GKOS.english = Object.assign({}, GKOS.latin, patch.english, patch.special);
     class KeyDown extends KeyboardEvent {
         constructor(key, code, serial, keytype) {
             super("keydown", {key: key, code: code});
