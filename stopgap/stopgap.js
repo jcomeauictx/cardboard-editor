@@ -428,14 +428,15 @@ window.addEventListener("load", function() {
                 button.addEventListener("pointercancel", cancel);
                 button.addEventListener("pointerout", cancel);
                 // in case those don't work, use mouse events
-                // however, they're unlikely to work on more than one
+                // however, they won't work on more than one
                 // button at a time
-                button.addEventListener("mousedown", chordKeyDown);
-                button.addEventListener("mouseup", chordKeyUp);
-                button.addEventListener("mouseleave", cancel);
+                //button.addEventListener("mousedown", chordKeyDown);
+                //button.addEventListener("mouseup", chordKeyUp);
+                //button.addEventListener("mouseleave", cancel);
                 // in case none of the above do anything, at least log it
                 button.addEventListener("click", noop);
             } else {
+                // on desktop, no chording possible with softkeys
                 button.addEventListener("click", chordKeyClick);
             }
         });
