@@ -42,6 +42,11 @@ window.addEventListener("load", function() {
     // X (64) and Y (128) are not keys, but chord offsets
     const X = 0x40;
     const Y = 0x80;
+    let shift = _; // bit-OR in X and/or Y as needed
+    let meta = _; // Ctrl, Alt, Win
+    // we reuse the chording bit values for meta keys
+    const LEFT_ALT = A, RIGHT_ALT = Y, LEFT_CTRL = B, RIGHT_CTRL = X;
+    const META_KEY = C;
     const mapping = { // chords to characters (GKOS standard for English)
         /* NOTE: I'm using END (cf. 'End') for what looks like a "Play" button
            in the GKOS test page, and HOME for its reverse. Neither does
@@ -256,9 +261,11 @@ window.addEventListener("load", function() {
             } else {
                 // hardware key, or platform-supplied softkey
                 console.debug("tunneled key '" + key + "', using verbatim");
-                if (specialKeys[key]) {
+                let handler = null;
+                if (key.length > 1) handler = eval("do" + key);
+                if (typeof handler == "function") {
                     console.debug("processing special key " + key);
-                    specialKeys[key]();
+                    handler(event);
                 } else {
                     deleteSelected();
                     console.debug("inserting character '" + key + "'");
@@ -294,12 +301,16 @@ window.addEventListener("load", function() {
         if (event.serial) {
             const key = event.key;
             if (readyToRead) {
-                const character = mapping[untimedChord] || '';
+                const character = mapping[untimedChord | shift] || '';
+                shift = _; // FIXME: needs to be conditional, see GKOS source
+                meta = _; // FIXME: should this be done here?
+                let handler = null;
                 readyToRead = false;
                 untimedChord = 0;
-                if (specialKeys[character]) {
-                    console.debug("processing special key " + character);
-                    specialKeys[character]();
+                if (key.length > 1) handler = eval("do" + key);
+                if (typeof handler == "function") {
+                    console.debug("processing special key " + key);
+                    handler(event);
                 } else {
                     deleteSelected();
                     console.debug("inserting character '" + character + "'");
@@ -345,7 +356,7 @@ window.addEventListener("load", function() {
                       (direction == "up" ? "released" : "pressed"));
         sendKey(character, character, null, direction, keytype);
     };
-    const backspace = function(event) {
+    const doBackspace = function(event) {
         console.debug("Backspace received with caretPosition " +
                       JSON.stringify(caretPosition));
         const selected = caretPosition.end - caretPosition.start;
@@ -354,6 +365,10 @@ window.addEventListener("load", function() {
         // if there's nothing there, do nothing.
         if (selected == 0 && caretPosition.start > 0) --caretPosition.start;
         if (caretPosition.end > 0) deleteSelected();
+    };
+    const doSYMB = function(event) {
+        console.debug("Entering SYMBol mode for following character");
+        shift |= Y;
     };
     const noop = function(event) {
         console.debug(
@@ -396,7 +411,7 @@ window.addEventListener("load", function() {
         }
     };
     const endOfLine = navigator.platform.startsWith("Win") ? "\r\n" : "\n";
-    const endline = function(event) {
+    const doEnter = function(event) {
         console.debug("implementing <ENTER> key");
         insertString(endOfLine);
     };
@@ -447,11 +462,6 @@ window.addEventListener("load", function() {
                 button.addEventListener("click", chordKeyClick);
             }
         });
-    };
-    const specialKeys = {
-        Backspace: backspace,
-        Enter: endline,
-        Escape: noop,
     };
     // begin untimed keychord processing
     /* the description on page 20 of gkos_spec_v314.pdf says to read chord
