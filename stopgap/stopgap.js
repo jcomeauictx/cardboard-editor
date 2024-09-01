@@ -263,10 +263,14 @@ window.addEventListener("load", function() {
                 console.debug("tunneled key '" + key + "', using verbatim");
                 let handler = null;
                 if (key.length > 1) handler = eval("do" + key);
+                console.debug("handler do" + key + ": " + handler);
                 if (typeof handler == "function") {
                     console.debug("processing special key " + key);
                     handler(event);
                 } else {
+                    if (typeof handler != null) {
+                        console.debug("typeof handler: " + typeof handler);
+                    }
                     deleteSelected();
                     console.debug("inserting character '" + key + "'");
                     insertString(key);
