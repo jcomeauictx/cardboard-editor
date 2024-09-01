@@ -20,3 +20,10 @@ the same on Android with Chrome.
 * Websocket is closing unexpectedly; need to implement ping/pong?
 * Multi-touch with [touch events](https://developer.mozilla.org/en-US/docs/Web/API/Touch_events/Multi-touch_interaction) and [pointer events](https://developer.mozilla.org/en-US/docs/Web/API/Pointer_events/Multi-touch_interaction)
 * [Writing WebSocket servers](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers)
+* GKOS is good for a first start, but I'd like to implement something entirely
+  different, a concept I'm calling an "adaptive keyboard". I did a google search  and found this on [alternative keyboards](https://www.ucdenver.edu/centers/center-for-inclusive-design-and-engineering/community-engagement/colorado-assistive-technology-act-program/technology-and-transition-to-employment/alternative-keyboards), and while these are certainly innovative and potentially useful, they
+  aren't what I'm looking for. I won't really know until I start coding it
+  what it will resemble, but it will have autocomplete and autosuggest
+  capabilities, and start with *classes* of characters (vowels, consonants,
+  punctuation, and left- and right-handed things like `{[(<>)]}` brackets and
+  control/alt keys.
