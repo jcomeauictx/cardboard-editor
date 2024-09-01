@@ -35,6 +35,10 @@ form {
 	z-index: -1;  /* behind the editor textarea */
 	overflow-wrap: break-word;
 }
+.menu {
+	border-color: transparent;
+	z-index: 1;  /* in front of textarea when activated */
+}
 .background pre {
 	white-space: pre-wrap;
 }
