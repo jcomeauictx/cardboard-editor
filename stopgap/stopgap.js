@@ -262,7 +262,7 @@ window.addEventListener("load", function() {
                 // hardware key, or platform-supplied softkey
                 console.debug("tunneled key '" + key + "', using verbatim");
                 let handler = null;
-                if (key.length > 1) handler = eval("do" + key);
+                if (key.length > 1) handler = this["do" + key];
                 console.debug("handler do" + key + ": " + handler);
                 if (typeof handler == "function") {
                     console.debug("processing special key " + key);
@@ -311,7 +311,8 @@ window.addEventListener("load", function() {
                 let handler = null;
                 readyToRead = false;
                 untimedChord = 0;
-                if (key.length > 1) handler = eval("do" + key);
+                if (key.length > 1) handler = this["do" + key];
+                console.debug("handler do" + key + ": " + handler);
                 if (typeof handler == "function") {
                     console.debug("processing special key " + key);
                     handler(event);
@@ -531,6 +532,19 @@ window.addEventListener("load", function() {
         webSocket.send("stopgap editor");
     };
     console.info("WebSocket connection initialized");
+    // add this to window namespace
+    if (typeof window.cjcs == "undefined") {
+        window.cjcs = this;
+        console.debug("window.onload function available as window.cjcs");
+    }
+    if (typeof window.com == "undefined") {
+        window.com = {};
+    }
+    if (typeof window.com == "object") {
+        window.com.jcomeau = {cardboard_editor: {stopgap: this}};
+        console.debug("window.onload function available as " +
+                      "com.jcomeau.cardboard_editor.stopgap");
+    }
 }, false);
 console.info("stopgap.js loaded");
 // vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
