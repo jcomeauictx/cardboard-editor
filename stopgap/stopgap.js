@@ -397,6 +397,7 @@ window.onload = function() {
             }
         },
         Enter: function(event, key) {
+            deleteSelected();
             console.debug("implementing <ENTER> key");
             insertString(endOfLine);
         },
