@@ -371,15 +371,18 @@ window.addEventListener("load", function() {
         if (caretPosition.end > 0) deleteSelected();
     };
     const doSYMB = function(event) {
-        console.debug("Entering SYMBol mode for following character");
-        shift |= Y;
+        if (event.type == "keydown") {
+            // only hardware keys dispatch key handlers on keydown
+            console.debug("SYMB key is GKOS only, ignoring");
+        } else {
+            console.debug("Entering SYMBol mode for following character");
+            shift |= Y;
+        }
     };
     const noop = function(event) {
         console.debug(
-                    "ignoring event " + event +
-                    "(" + JSON.stringify(event) + ")" +
-                    ", target: " + target +
-                    "(" + JSON.stringify(event.target) + ")"
+            "ignoring event " + event + "(" + JSON.stringify(event) + ")" +
+            ", target: " + target + "(" + JSON.stringify(event.target) + ")"
         );
     };
     const GKOSKeys = {
