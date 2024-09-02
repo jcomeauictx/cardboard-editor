@@ -42,6 +42,7 @@ window.onload = function() {
     // X (64) and Y (128) are not keys, but chord offsets
     const X = 0x40;
     const Y = 0x80;
+    const Z = X | Y;
     let shift = _; // bit-OR in X and/or Y as needed
     let meta = _; // Ctrl, Alt, Win
     // we reuse the chording bit values for meta keys
@@ -124,7 +125,7 @@ window.onload = function() {
         mapping[value] = mapping[key][0];
         mapping[value | X] = mapping[key][1]; // shifted
         mapping[value | Y] = mapping[key][2]; // numbers mode
-        mapping[value | X | Y] = mapping[key][3]; // SYMBols mode
+        mapping[value | Z] = mapping[key][3]; // SYMBols mode
         delete mapping[key]; // no more need for text key
     });
     console.debug("mapping: " + JSON.stringify(mapping));
@@ -292,6 +293,13 @@ window.onload = function() {
         if (event.serial) {
             const key = mapping[untimedChord | shift] || '';
             if (readyToRead) {
+                if (untimedChord || shift) {
+                    console.debug(
+                        "chord: " + untimedChord +
+                        ", shift: " + shift +
+                        ", complete chord: " + (untimedChord | shift)
+                    );
+                }
                 shift = _; // FIXME: needs to be conditional, see GKOS source
                 meta = _; // FIXME: should this be done here?
                 readyToRead = false;
@@ -393,7 +401,7 @@ window.onload = function() {
                 console.debug("SYMB key is GKOS only, ignoring");
             } else {
                 console.debug("Entering SYMBol mode for following character");
-                shift |= Y;
+                shift |= Z;
             }
         },
         Enter: function(event, key) {
