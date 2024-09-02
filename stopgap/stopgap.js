@@ -261,20 +261,7 @@ window.onload = function() {
             } else {
                 // hardware key, or platform-supplied softkey
                 console.debug("tunneled key '" + key + "', using verbatim");
-                let handler = null;
-                if (key.length > 1) handler = window.onload["do" + key];
-                console.debug("handler do" + key + ": " + handler);
-                if (typeof handler == "function") {
-                    console.debug("processing special key " + key);
-                    handler(event);
-                } else {
-                    if (typeof handler != null) {
-                        console.debug("typeof handler: " + typeof handler);
-                    }
-                    deleteSelected();
-                    console.debug("inserting character '" + key + "'");
-                    insertString(key);
-                }
+                (keyHandlers[key] || keyHandlers.default)(event, key);
             }
         } else if (event.code === "") {
             console.debug("test key: '" + event.key + "'");
@@ -303,26 +290,13 @@ window.onload = function() {
     document.body.addEventListener("keyup", function(event) {
         let echo = true;
         if (event.serial) {
-            const key = event.key;
+            const key = mapping[untimedChord | shift] || '';
             if (readyToRead) {
-                const character = mapping[untimedChord | shift] || '';
                 shift = _; // FIXME: needs to be conditional, see GKOS source
                 meta = _; // FIXME: should this be done here?
-                let handler = null;
                 readyToRead = false;
                 untimedChord = 0;
-                if (character.length > 1) {
-                    handler = window.onload["do" + character];
-                }
-                console.debug("handler do" + character + ": " + handler);
-                if (typeof handler == "function") {
-                    console.debug("processing special key " + character);
-                    handler(event);
-                } else {
-                    deleteSelected();
-                    console.debug("inserting character '" + character + "'");
-                    insertString(character);
-                }
+                (keyHandlers[key] || keyHandlers.default)(event, key);
             }
         } else {
             console.debug("local key: '" + event.key + "'");
@@ -363,25 +337,6 @@ window.onload = function() {
                       (direction == "up" ? "released" : "pressed"));
         sendKey(character, character, null, direction, keytype);
     };
-    const doBackspace = function(event) {
-        console.debug("Backspace received with caretPosition " +
-                      JSON.stringify(caretPosition));
-        const selected = caretPosition.end - caretPosition.start;
-        // if there is selected text already, simply remove it on backspace
-        // otherwise "select" the final character and remove it.
-        // if there's nothing there, do nothing.
-        if (selected == 0 && caretPosition.start > 0) --caretPosition.start;
-        if (caretPosition.end > 0) deleteSelected();
-    };
-    const doSYMB = function(event) {
-        if (event.type == "keydown") {
-            // only hardware keys dispatch key handlers on keydown
-            console.debug("SYMB key is GKOS only, ignoring");
-        } else {
-            console.debug("Entering SYMBol mode for following character");
-            shift |= Y;
-        }
-    };
     const noop = function(event) {
         console.debug(
             "ignoring event " + event + "(" + JSON.stringify(event) + ")" +
@@ -421,9 +376,35 @@ window.onload = function() {
         }
     };
     const endOfLine = navigator.platform.startsWith("Win") ? "\r\n" : "\n";
-    const doEnter = function(event) {
-        console.debug("implementing <ENTER> key");
-        insertString(endOfLine);
+    const keyHandlers = {
+        Backspace: function(event, key) {
+            console.debug("Backspace received with caretPosition " +
+                          JSON.stringify(caretPosition));
+            const selected = caretPosition.end - caretPosition.start;
+            // if there is selected text already, simply remove it on backspace
+            // otherwise "select" the final character and remove it.
+            // if there's nothing there, do nothing.
+            if (selected == 0 && caretPosition.start > 0) --caretPosition.start;
+            if (caretPosition.end > 0) deleteSelected();
+        },
+        SYMB: function(event, key) {
+            if (event.type == "keydown") {
+                // only hardware keys dispatch key handlers on keydown
+                console.debug("SYMB key is GKOS only, ignoring");
+            } else {
+                console.debug("Entering SYMBol mode for following character");
+                shift |= Y;
+            }
+        },
+        Enter: function(event, key) {
+            console.debug("implementing <ENTER> key");
+            insertString(endOfLine);
+        },
+        default: function(event, key) {
+            deleteSelected();
+            console.debug("inserting character '" + key + "'");
+            insertString(key);
+        }
     };
     const cancel = function(event) {
         /* remove key from chord
