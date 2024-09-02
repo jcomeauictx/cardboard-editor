@@ -1,4 +1,4 @@
-window.addEventListener("load", function() {
+window.onload = function() {
     /* eventually we probably could/should eliminate the textarea altogether
        and just use the background div, vastly simplifying the code. but
        during development, I want to compare how well my code mirrors the
@@ -262,7 +262,7 @@ window.addEventListener("load", function() {
                 // hardware key, or platform-supplied softkey
                 console.debug("tunneled key '" + key + "', using verbatim");
                 let handler = null;
-                if (key.length > 1) handler = this["do" + key];
+                if (key.length > 1) handler = window.onload["do" + key];
                 console.debug("handler do" + key + ": " + handler);
                 if (typeof handler == "function") {
                     console.debug("processing special key " + key);
@@ -311,10 +311,12 @@ window.addEventListener("load", function() {
                 let handler = null;
                 readyToRead = false;
                 untimedChord = 0;
-                if (key.length > 1) handler = this["do" + key];
-                console.debug("handler do" + key + ": " + handler);
+                if (character.length > 1) {
+                    handler = window.onload["do" + character];
+                }
+                console.debug("handler do" + character + ": " + handler);
                 if (typeof handler == "function") {
-                    console.debug("processing special key " + key);
+                    console.debug("processing special key " + character);
                     handler(event);
                 } else {
                     deleteSelected();
@@ -457,12 +459,6 @@ window.addEventListener("load", function() {
                 button.addEventListener("pointerleave", cancel);
                 button.addEventListener("pointercancel", cancel);
                 button.addEventListener("pointerout", cancel);
-                // in case those don't work, use mouse events
-                // however, they won't work on more than one
-                // button at a time
-                //button.addEventListener("mousedown", chordKeyDown);
-                //button.addEventListener("mouseup", chordKeyUp);
-                //button.addEventListener("mouseleave", cancel);
                 // in case none of the above do anything, at least log it
                 button.addEventListener("click", noop);
             } else {
@@ -532,19 +528,6 @@ window.addEventListener("load", function() {
         webSocket.send("stopgap editor");
     };
     console.info("WebSocket connection initialized");
-    // add this to window namespace
-    if (typeof window.cjcs == "undefined") {
-        window.cjcs = this;
-        console.debug("window.onload function available as window.cjcs");
-    }
-    if (typeof window.com == "undefined") {
-        window.com = {};
-    }
-    if (typeof window.com == "object") {
-        window.com.jcomeau = {cardboard_editor: {stopgap: this}};
-        console.debug("window.onload function available as " +
-                      "com.jcomeau.cardboard_editor.stopgap");
-    }
-}, false);
+};
 console.info("stopgap.js loaded");
 // vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
