@@ -37,7 +37,10 @@ form {
 }
 .menu {
 	border-color: transparent;
+	width: 100%;
+	height: 1.5em;
 	z-index: 1;  /* in front of textarea when activated */
+	display: none;  /* hidden until activated by `alt` key */
 }
 .background pre {
 	white-space: pre-wrap;

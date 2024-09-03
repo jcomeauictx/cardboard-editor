@@ -379,6 +379,10 @@ window.onload = function() {
     };
     const endOfLine = navigator.platform.startsWith("Win") ? "\r\n" : "\n";
     const keyHandlers = {
+        Alt: function(event, key) {
+            console.debug("Alt key received");
+            document.getElementById("menu").style.removeProperty("display");
+        },
         Backspace: function(event, key) {
             console.debug("Backspace received with caretPosition " +
                           JSON.stringify(caretPosition));
