@@ -245,12 +245,6 @@ window.onload = function() {
                       ", target: " + event.currentTarget.tagName +
                       ", eventPhase: " + phases[event.eventPhase]);
         let echo = true;
-        if (event.altKey || event.ctrlKey || event.metaKey) {
-            console.debug(
-                "ignoring keydown with alt, ctrl, or meta modifiers"
-            );
-            return false;  // stop propagation and default action
-        }
         if (event.serial) {  // requires 1-based serial numbers
             const key = event.key;
             if (event.keytype == "gkos") {
@@ -395,6 +389,11 @@ window.onload = function() {
             if (selected == 0 && caretPosition.start > 0) --caretPosition.start;
             if (caretPosition.end > 0) deleteSelected();
         },
+        Enter: function(event, key) {
+            deleteSelected();
+            console.debug("implementing <ENTER> key");
+            insertString(endOfLine);
+        },
         SYMB: function(event, key) {
             if (event.type == "keydown") {
                 // only hardware keys dispatch key handlers on keydown
@@ -403,11 +402,6 @@ window.onload = function() {
                 console.debug("Entering SYMBol mode for following character");
                 shift |= Z;
             }
-        },
-        Enter: function(event, key) {
-            deleteSelected();
-            console.debug("implementing <ENTER> key");
-            insertString(endOfLine);
         },
         default: function(event, key) {
             deleteSelected();
