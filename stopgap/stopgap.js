@@ -44,8 +44,8 @@ window.onload = function() {
     const Y = 0x80;
     const Z = X | Y;
     let shift = _; // bit-OR in X and/or Y as needed
-    let meta = _; // Ctrl, Alt, Win
-    // we reuse the chording bit values for meta keys
+    let modifiers = _; // Ctrl, Alt, Win
+    // we reuse the chording bit values for modifier keys
     const LEFT_ALT = A, RIGHT_ALT = Y, LEFT_CTRL = B, RIGHT_CTRL = X;
     const META_KEY = C;
     const mapping = { // chords to characters (GKOS standard for English)
@@ -295,7 +295,7 @@ window.onload = function() {
                     );
                 }
                 shift = _; // FIXME: needs to be conditional, see GKOS source
-                meta = _; // FIXME: should this be done here?
+                modifiers = _; // FIXME: should this be done here?
                 readyToRead = false;
                 untimedChord = 0;
                 (keyHandlers[key] || keyHandlers.default)(event, key);
