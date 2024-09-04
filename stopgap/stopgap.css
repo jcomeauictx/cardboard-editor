@@ -40,7 +40,6 @@ form {
 	width: 100%;
 	height: 1.5em;
 	z-index: 2;  /* in front of textarea when activated */
-	display: none;  /* hidden until activated by `alt` key */
 }
 .background pre {
 	white-space: pre-wrap;
