@@ -63,6 +63,7 @@ else
 	export LOCAL
 endif
 all: lint doctest stop credentials create_ap httpserver
+fast: stop credentials create_ap httpserver
 iphone:
 	$(MAKE) LOCAL=127.0.0.1 stop httpserver
 xtest: xtest.py

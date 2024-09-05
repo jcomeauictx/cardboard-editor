@@ -37,6 +37,8 @@ form {
 }
 .menu {
 	/* white-on-black to stand out from edit window */
+	display: inline-block;  /* so vertical-align has a chance of working */
+	vertical-align: middle;
 	background-color: black;
 	color: white;
 	/* also use a sans-serif font to differentiate from edited text */
@@ -46,7 +48,10 @@ form {
 	z-index: 2;  /* in front of textarea when activated */
 }
 .menu-item {
-	display: inline-block;
+	display: table-cell;
+	vertical-align: middle;
+	width: auto;
+	padding-left: 0.5em;
 }
 .menu-item:first-letter {
 	text-decoration: underline;
