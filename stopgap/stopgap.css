@@ -42,12 +42,14 @@ form {
 	/* also use a sans-serif font to differentiate from edited text */
 	font-family: Arial, sans-serif;
 	width: 100%;
-	height: 1.5em;
+	height: auto;
+	padding: 3px;
 	z-index: 2;  /* in front of textarea when activated */
 }
 .menu-item {
 	display: inline-block; /* needed for underline to work */
 	width: auto; /* otherwise default would put it to 100% */
+	height: auto; /* necessary to vertical align */
 	padding-left: 0.5em;
 }
 .menu-item:first-letter {
