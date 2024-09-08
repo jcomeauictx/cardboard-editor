@@ -84,7 +84,7 @@ window.onload = function() {
         '_|_|C|D|E|_': ['j', 'J', '9', '9'],
         'A|_|C|D|E|_': ['to ', 'To ', '', '\u030c'],
         '_|B|C|D|E|_': ['/', '\u0301', '/', '\u0301'], // forward slash, accent
-        'A|B|C|D|E|_': ['Esc', 'Esc', 'Esc', 'Esc'],
+        'A|B|C|D|E|_': ['Escape', 'Escape', 'Escape', 'Escape'],
         '_|_|_|_|_|F': ['f', 'F', '6', '6'],
         'A|_|_|_|_|F': ['?', '~', '?', '~'],
         '_|B|_|_|_|F': ['.', ':', '.', ':'],
@@ -265,7 +265,7 @@ window.onload = function() {
             if (hasFocus == editWindow && !event.keytype) {
                 /* FIXME: expand list to all keys which need echo regardless
                    of edit window having focus */
-                echo = ["Alt"].includes(event.key);
+                echo = ["Alt", "Escape"].includes(event.key);
                 if (!echo) {
                     console.debug("keydown " + event.key +
                                   ", code: " + event.code +
@@ -403,6 +403,10 @@ window.onload = function() {
             deleteSelected();
             console.debug("implementing <ENTER> key");
             insertString(endOfLine);
+        },
+        Escape: function(event, key) {
+            console.debug("Escape key received");
+            document.getElementById("menu").style.display = "none";
         },
         SYMB: function(event, key) {
             if (event.type == "keydown") {
