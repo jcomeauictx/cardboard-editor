@@ -22,8 +22,13 @@
       id="fake-caret"></span></pre></div>
     <!-- menu hidden until activated by Alt key -->
     <div id="menu" class="editor menu" style="display:none">
-      <span class="menu-item">File</span>
-      <span class="menu-item">Help</span>
+      <select class="menu-item" name="file">
+        <option value="">File</option>
+        <option value="open">Open</option>
+        <option value="save">Save</option>
+        <option value="close">Close</option>
+      </select>
+      <button class="menu-item">Help</button>
     </div>
   </div>
   <div id="keyboard"></div>
