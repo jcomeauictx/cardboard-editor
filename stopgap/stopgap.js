@@ -263,10 +263,16 @@ window.onload = function() {
         } else {
             console.debug("local key: '" + event.key + "'");
             if (hasFocus == editWindow && !event.keytype) {
-                console.debug("keydown " + event.key +
-                              ", code: " + event.code +
-                              " assumed to be processed by editWindow");
-                echo = false;
+                /* FIXME: expand list to all keys which need echo regardless
+                   of edit window having focus */
+                echo = ["Alt"].includes(event.key);
+                if (!echo) {
+                    console.debug("keydown " + event.key +
+                                  ", code: " + event.code +
+                                  " assumed to be processed by editWindow");
+                } else {
+                    console.debug("allowing '" + event.key + "' to be echoed");
+                }
             }
             console.debug("sending keydown '" + event.key +
                           "' through webSocket tunnel");
