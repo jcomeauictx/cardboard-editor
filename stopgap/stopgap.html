@@ -22,12 +22,13 @@
       id="fake-caret"></span></pre></div>
     <!-- menu hidden until activated by Alt key -->
     <div id="menu" class="editor menu" style="display:none">
-      <select class="menu-item" name="file">
-        <option value="">File</option>
-        <option value="open">Open</option>
-        <option value="save">Save</option>
-        <option value="close">Close</option>
-      </select>
+      <button class="menu-item" name="file" aria-controls="file-menu"
+          aria-owns="file-menu" aria-expanded="false">File</button>
+        <menu id="file-menu">
+          <li id="file-open">Open</li>
+          <li id="file-save">Save</li>
+          <li id="file-close">Close</li>
+        </menu>
       <button class="menu-item">Help</button>
     </div>
   </div>
