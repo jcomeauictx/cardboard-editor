@@ -22,14 +22,15 @@
       id="fake-caret"></span></pre></div>
     <!-- menu hidden until activated by Alt key -->
     <div id="menu" class="editor menu" style="display:none" role="menubar">
-      <button class="menu-item" name="file" aria-controls="file-menu"
-          aria-owns="file-menu" aria-expanded="false">File</button>
-        <menu id="file-menu">
-          <li id="file-open">Open</li>
-          <li id="file-save">Save</li>
-          <li id="file-close">Close</li>
+      <span role="menuitem" aria-controls="file-menu"
+          aria-haspopup=true aria-owns="file-menu" aria-hidden="true"
+          aria-keyshortcuts="F" aria-expanded="false">File</span>
+        <menu id="file-menu" role="menu" aria-label="File">
+          <li id="file-open" role="menuitem" aria-keyshortcuts="O">Open</li>
+          <li id="file-save" role="menuitem" aria-keyshortcuts="S">Save</li>
+          <li id="file-close" role="menuitem" aria-keyshortcuts="C">Close</li>
         </menu>
-      <button class="menu-item">Help</button>
+      <span role="menuitem" aria-keyshortcuts="H">Help</span>
     </div>
   </div>
   <div id="keyboard"></div>
