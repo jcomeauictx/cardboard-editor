@@ -27,3 +27,4 @@ the same on Android with Chrome.
   capabilities, and start with *classes* of characters (vowels, consonants,
   punctuation, and left- and right-handed things like `{[(<>)]}` brackets and
   control/alt keys.
+* [Example of menubar](https://www.w3.org/WAI/ARIA/apg/patterns/menubar/examples/menubar-navigation/) and [this one](https://www.w3.org/WAI/ARIA/apg/patterns/menubar/examples/menubar-editor/)
