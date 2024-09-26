@@ -13,8 +13,10 @@
 <script src="stopgap.js"></script>
 </head>
 <body>
-<form id="required-for-textarea"></form>
 <div class="container">
+  <form id="required-for-textarea" style="display: none">
+    <input type="file" accept="text/*">
+  </form>
   <div class="display">
     <textarea id="edit-window" class="editor" form="required-for-textarea"
       placeholder="(Text being edited goes here.)"></textarea>
