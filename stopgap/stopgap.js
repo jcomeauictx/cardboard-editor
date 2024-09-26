@@ -48,6 +48,8 @@ window.onload = function() {
     // we reuse the chording bit values for modifier keys
     const LEFT_ALT = A, RIGHT_ALT = Y, LEFT_CTRL = B, RIGHT_CTRL = X;
     const META_KEY = C;
+    const ALT = LEFT_ALT | RIGHT_ALT;
+    const CTRL = LEFT_CTRL | RIGHT_CTRL;
     const mapping = { // chords to characters (GKOS standard for English)
         /* NOTE: I'm using END (cf. 'End') for what looks like a "Play" button
            in the GKOS test page, and HOME for its reverse. Neither does
@@ -387,7 +389,7 @@ window.onload = function() {
     const keyHandlers = {
         Alt: function(event, key) {
             console.debug("Alt key received");
-            document.getElementById("menu").style.removeProperty("display");
+            modifiers |= LEFT_ALT;
         },
         Backspace: function(event, key) {
             console.debug("Backspace received with caretPosition " +
@@ -406,7 +408,6 @@ window.onload = function() {
         },
         Escape: function(event, key) {
             console.debug("Escape key received");
-            document.getElementById("menu").style.display = "none";
         },
         SYMB: function(event, key) {
             if (event.type == "keydown") {
