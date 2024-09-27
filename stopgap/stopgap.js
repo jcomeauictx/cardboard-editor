@@ -147,7 +147,7 @@ window.onload = function() {
     }
     fakeCaret.parentNode.removeChild(fakeCaret);  // remove from DOM
     const styles = ["padding", "borderWidth", "borderStyle",
-                  "margin", "lineHeight"];
+                    "margin", "lineHeight"];
     styles.forEach(function(style) {
         background.style[style] = getComputedStyle(editWindow)[style];
     });
