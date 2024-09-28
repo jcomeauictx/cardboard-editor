@@ -45,9 +45,12 @@ window.onload = function() {
     const Z = X | Y;
     let shift = _; // bit-OR in X and/or Y as needed
     let modifiers = _; // Ctrl, Alt, Win
+    const modifierKeyNames = [
+        "Shift", "Ctrl", "Alt", "Meta", "AltGr", "Win", "Cmd"
+    ];
     // we reuse the chording bit values for modifier keys
     const LEFT_ALT = A, RIGHT_ALT = Y, LEFT_CTRL = B, RIGHT_CTRL = X;
-    const META_KEY = C;
+    const META = C;
     const ALT = LEFT_ALT | RIGHT_ALT;
     const CTRL = LEFT_CTRL | RIGHT_CTRL;
     const mapping = { // chords to characters (GKOS standard for English)
@@ -258,6 +261,7 @@ window.onload = function() {
             } else {
                 // hardware key, or platform-supplied softkey
                 console.debug("tunneled key '" + key + "', using verbatim");
+                key = modified(key);
                 (keyHandlers[key] || keyHandlers.default)(event, key);
             }
         } else if (event.code === "") {
@@ -303,9 +307,9 @@ window.onload = function() {
                     );
                 }
                 shift = _; // FIXME: needs to be conditional, see GKOS source
-                modifiers = _; // FIXME: should this be done here?
                 readyToRead = false;
                 untimedChord = 0;
+                key = modified(event, key);
                 (keyHandlers[key] || keyHandlers.default)(event, key);
             }
         } else {
@@ -386,10 +390,35 @@ window.onload = function() {
         }
     };
     const endOfLine = navigator.platform.startsWith("Win") ? "\r\n" : "\n";
+    const capitalize = function(word) {
+        // https://stackoverflow.com/a/7224605/493161
+        return word[0].toUpperCase() + word.slice(1);
+    };
+    const modified = function(event, key) {
+        const keyName = key;  // save before we start messing with it
+        if (!modifierKeyNames.includes(keyName)) {
+            let prefix = "";
+            /* order is Ctrl-Alt-Meta-key, so process modifiers in reverse */
+            console.debug("modifying key '" + key + "'");
+            if (event.metaKey || modifiers | META) prefix = "Meta-" + prefix;
+            if (event.altKey || modifiers | ALT) prefix = "Alt-" + prefix;
+            if (event.ctrlKey || modifiers | CTRL) prefix = "Ctrl-" + prefix;
+            modifiers = _;  // reset modifiers to zero
+            if (prefix != "") {
+                key = prefix + capitalize(key);
+            };
+            console.debug("modified key: '" + key + "', modifiers cleared");
+        };
+        return key;
+    };
     const keyHandlers = {
         Alt: function(event, key) {
             console.debug("Alt key received");
             modifiers |= LEFT_ALT;
+        },
+        "Alt-O": function(event, key) {
+            console.debug("Displaying file open dialog");
+            document.getElementById("file-open").style.display = "block";
         },
         Backspace: function(event, key) {
             console.debug("Backspace received with caretPosition " +
@@ -400,6 +429,10 @@ window.onload = function() {
             // if there's nothing there, do nothing.
             if (selected == 0 && caretPosition.start > 0) --caretPosition.start;
             if (caretPosition.end > 0) deleteSelected();
+        },
+        Ctrl: function(event, key) {
+            console.debug("Control key received");
+            modifiers |= LEFT_CTRL;
         },
         Enter: function(event, key) {
             deleteSelected();
@@ -420,8 +453,12 @@ window.onload = function() {
         },
         default: function(event, key) {
             deleteSelected();
-            console.debug("inserting character '" + key + "'");
-            insertString(key);
+            if (len(key) == 1 || key[0]) {
+                console.debug("inserting character '" + key + "'");
+                insertString(key);
+            } else {
+                console.debug("no programmed action for " + key);
+            }
         }
     };
     const cancel = function(event) {
