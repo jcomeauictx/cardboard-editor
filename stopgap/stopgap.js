@@ -251,7 +251,7 @@ window.onload = function() {
                       ", eventPhase: " + phases[event.eventPhase]);
         let echo = true;
         if (event.serial) {  // requires 1-based serial numbers
-            const key = event.key;
+            let key = event.key;
             if (event.keytype == "gkos") {
                 const value = GKOSKeys[key].value;
                 untimedChord |= value;
@@ -261,7 +261,7 @@ window.onload = function() {
             } else {
                 // hardware key, or platform-supplied softkey
                 console.debug("tunneled key '" + key + "', using verbatim");
-                key = modified(key);
+                key = modified(event, key);
                 (keyHandlers[key] || keyHandlers.default)(event, key);
             }
         } else if (event.code === "") {
@@ -297,7 +297,7 @@ window.onload = function() {
     document.body.addEventListener("keyup", function(event) {
         let echo = true;
         if (event.serial) {
-            const key = mapping[untimedChord | shift] || '';
+            let key = mapping[untimedChord | shift] || '';
             if (readyToRead) {
                 if (untimedChord || shift) {
                     console.debug(
@@ -453,7 +453,7 @@ window.onload = function() {
         },
         default: function(event, key) {
             deleteSelected();
-            if (len(key) == 1 || key[0]) {
+            if (key.length == 1) {
                 console.debug("inserting character '" + key + "'");
                 insertString(key);
             } else {
