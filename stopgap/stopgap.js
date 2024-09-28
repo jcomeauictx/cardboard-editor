@@ -400,9 +400,11 @@ window.onload = function() {
             let prefix = "";
             /* order is Ctrl-Alt-Meta-key, so process modifiers in reverse */
             console.debug("modifying key '" + key + "'");
-            if (event.metaKey || modifiers | META) prefix = "Meta-" + prefix;
-            if (event.altKey || modifiers | ALT) prefix = "Alt-" + prefix;
-            if (event.ctrlKey || modifiers | CTRL) prefix = "Ctrl-" + prefix;
+            console.debug("modifiers: " + modifiers);
+            console.debug("event: " + JSON.stringify(event));
+            if (event.metaKey || (modifiers | META)) prefix = "Meta-" + prefix;
+            if (event.altKey || (modifiers | ALT)) prefix = "Alt-" + prefix;
+            if (event.ctrlKey || (modifiers | CTRL)) prefix = "Ctrl-" + prefix;
             modifiers = _;  // reset modifiers to zero
             if (prefix != "") {
                 key = prefix + capitalize(key);
