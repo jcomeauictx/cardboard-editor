@@ -442,7 +442,9 @@ window.onload = function() {
             insertString(endOfLine);
         },
         Escape: function(event, key) {
-            console.debug("Escape key received");
+            //console.debug("Escape key received");
+            console.debug("Hiding file open dialog");
+            document.getElementById("file-open").style.display = "none";
         },
         SYMB: function(event, key) {
             if (event.type == "keydown") {

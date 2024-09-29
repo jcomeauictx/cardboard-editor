@@ -38,28 +38,10 @@ form {
 #file-open {
 	width: auto;
 	height: auto;
+	padding: 8px;
 	/* use a sans-serif font to differentiate from edited text */
 	font-family: Arial, sans-serif;
-}
-.menu {
-	/* white-on-black to stand out from edit window */
-	background-color: black;
-	color: white;
-	/* use a sans-serif font to differentiate from edited text */
-	font-family: Arial, sans-serif;
-	width: 100%;
-	height: auto;
-	padding: 3px;
-	z-index: 2;  /* in front of textarea when activated */
-}
-.menu-item {
-	display: inline-block; /* needed for underline to work */
-	width: auto; /* otherwise default would put it to 100% */
-	height: auto; /* necessary to vertical align */
-	padding-left: 0.5em;
-}
-.menu-item:first-letter {
-	text-decoration: underline;
+	z-index: 2;  /* in front of edit window */
 }
 .background pre {
 	white-space: pre-wrap;

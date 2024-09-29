@@ -154,3 +154,5 @@ create_ap:
 	fi
 	while [ -z "$$($(AP_ROUTE))" ]; do sleep 1; done
 	ip route | awk '$$1 ~ /^$(NET)\/24$$/ {print}'
+edit:
+	vi stopgap.{js,css,html,py} Makefile
