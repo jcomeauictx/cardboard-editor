@@ -44,8 +44,15 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
         command = self.path.lstrip('/')
         if command in dir(self) and callable(getattr(self, command)):
             return getattr(self, command)()
-        self.send_error(HTTPStatus.NOT_IMPLEMENTED,
-                        'Command %s unsupported' % command)
+        logging.debug('POST headers: %s', self.headers)
+        content_length = self.headers.get('content-length')
+        #content_type = self.headers.get('content-type')
+        if content_length:
+            content = self.rfile.read(content_length)
+            logging.debug('content: %s', content)
+        self.send_response(HTTPStatus.NOT_MODIFIED,
+                           'file contents arriving over websocket')
+        self.end_headers()
         return None
 
     def send_head(self):
@@ -55,7 +62,7 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
         logging.debug('WebSocketHandler.send_head() called')
         if httppath.basename(self.path).startswith(FAVICONS):
             logging.debug('sending fake (empty) favicon.ico')
-            self.send_response(HTTPStatus.OK)
+            self.send_response(HTTPStatus.OK, 'providing empty icon')
             self.send_header('Content-type', 'image/png')
             self.send_header('Content-Length', '0')
             self.end_headers()
@@ -65,13 +72,13 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
             if os.getenv('FORCE_WS_ERROR'):  # `make FORCE_WS_ERROR=1`
                 logging.debug('pretending not to recognize WS request')
                 self.send_response(HTTPStatus.NOT_IMPLEMENTED,
-                                   'Pretending not to recognize, for debugging'
+                                   'pretending not to recognize, for debugging'
                 )
                 self.end_headers()
                 return None
             nonce = self.headers['Sec-WebSocket-Key'].encode()
             self.send_response_only(HTTPStatus.SWITCHING_PROTOCOLS,
-                                    'Switching Protocols')
+                                    'switching protocols')
             self.send_header('Upgrade', 'websocket')
             self.send_header('Connection', 'Upgrade')
             self.send_header('Sec-WebSocket-Accept', create_key(nonce).decode())
