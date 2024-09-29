@@ -14,9 +14,11 @@
 </head>
 <body>
 <div class="container">
-  <form id="editor-form">
-    <input id="file-open" class="editor" type="file"
-      accept="text/*" style="display:none">
+  <form id="editor-form" method="post" enctype="multipart/form-data">
+    <div id="file-open" class="editor" style="display: none">
+      <input type="file" accept="text/*">
+      <button>Open</button>
+    </div>
     <div class="display">
       <textarea id="edit-window" class="editor"
         placeholder="(Text being edited goes here.)"></textarea>

@@ -98,7 +98,7 @@ httpserver: $(HTTPSERVER)
 	! lsof -itcp:$(HTTPSERVER_PORT) -t -stcp:listen
 	! fuser $(HTTPSERVER_PORT)/tcp
 	@echo launching $< as $@... >&2
-	exec -a $@ $(STRACE) $(PYTHON) $< || true &
+	exec -a $@ $(STRACE) $(PYTHON) $< 2>&1 | tee $@.log || true &
 	# give server a chance to start before launching browser
 	while ! lsof -itcp:$(HTTPSERVER_PORT) -stcp:listen; do sleep 1; done
 	-$(BROWSE) "$(URL)" >&2
