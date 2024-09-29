@@ -402,9 +402,9 @@ window.onload = function() {
             console.debug("modifying key '" + key + "'");
             console.debug("modifiers: " + modifiers);
             console.debug("event: " + JSON.stringify(event));
-            if (event.metaKey || (modifiers | META)) prefix = "Meta-" + prefix;
-            if (event.altKey || (modifiers | ALT)) prefix = "Alt-" + prefix;
-            if (event.ctrlKey || (modifiers | CTRL)) prefix = "Ctrl-" + prefix;
+            if (event.metaKey || (modifiers & META)) prefix = "Meta-" + prefix;
+            if (event.altKey || (modifiers & ALT)) prefix = "Alt-" + prefix;
+            if (event.ctrlKey || (modifiers & CTRL)) prefix = "Ctrl-" + prefix;
             modifiers = _;  // reset modifiers to zero
             if (prefix != "") {
                 key = prefix + capitalize(key);
