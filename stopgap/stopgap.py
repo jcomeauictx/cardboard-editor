@@ -5,6 +5,7 @@ server for stopgap implementation
 import sys, os, logging, socket, json  # pylint: disable=multiple-imports
 import posixpath as httppath
 from http.server import SimpleHTTPRequestHandler, HTTPStatus, test as serve
+from urllib.parse import parse_qs
 from threading import Thread, enumerate as threading_enumerate
 from select import select
 from wsserver import create_key, launch_websocket, package, MAXPACKET, FIN, \
@@ -45,13 +46,20 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
         if command in dir(self) and callable(getattr(self, command)):
             return getattr(self, command)()
         logging.debug('POST headers: %s', self.headers)
-        content_length = self.headers.get('content-length')
-        #content_type = self.headers.get('content-type')
-        if content_length:
-            content = self.rfile.read(content_length)
+        content_length = int(self.headers.get('content-length', '0'))
+        content_type = self.headers.get('content-type')
+        supported = 'application/x-www-form-urlencoded'
+        if content_length and content_type == supported:
+            content = parse_qs(self.rfile.read(content_length))
             logging.debug('content: %s', content)
-        self.send_response(HTTPStatus.NOT_MODIFIED,
-                           'file contents arriving over websocket')
+            response = 'file contents arriving over websocket'
+        else:
+            logging.error(
+                'POST content %d bytes, type %s not supported',
+                 content_length, content_type
+            )
+            response = 'file contents unavailable, check log'
+        self.send_response(HTTPStatus.NOT_MODIFIED, response)
         self.end_headers()
         return None
 
