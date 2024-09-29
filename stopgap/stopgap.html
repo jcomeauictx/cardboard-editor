@@ -14,16 +14,17 @@
 </head>
 <body>
 <div class="container">
-  <form id="required-for-textarea" style="display: none">
-    <input id="file-open" type="file" accept="text/*">
+  <form id="editor-form">
+    <input id="file-open" class="editor" type="file"
+      accept="text/*" style="display:none">
+    <div class="display">
+      <textarea id="edit-window" class="editor"
+        placeholder="(Text being edited goes here.)"></textarea>
+      <div id="background" class="editor"><pre><span
+        id="fake-caret"></span></pre></div>
+    </div>
+    <div id="keyboard"></div>
   </form>
-  <div class="display">
-    <textarea id="edit-window" class="editor" form="required-for-textarea"
-      placeholder="(Text being edited goes here.)"></textarea>
-    <div id="background" class="editor background"><pre><span
-      id="fake-caret"></span></pre></div>
-  </div>
-  <div id="keyboard"></div>
 </div>
 </body>
 </html>
