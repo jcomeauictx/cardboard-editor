@@ -5,7 +5,7 @@ server for stopgap implementation
 import sys, os, logging, socket, json  # pylint: disable=multiple-imports
 import posixpath as httppath
 from http.server import SimpleHTTPRequestHandler, HTTPStatus, test as serve
-from urllib.parse import parse_qs
+#from urllib.parse import parse_qs
 from threading import Thread, enumerate as threading_enumerate
 from select import select
 from wsserver import create_key, launch_websocket, package, MAXPACKET, FIN, \
@@ -50,7 +50,7 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
         content_length = int(self.headers.get('content-length', '0'))
         content_type = self.headers.get('content-type')
         if content_length > 0 and content_type.startswith(FILE_CONTENT):
-            content = parse_qs(self.rfile.read(content_length))
+            content = self.rfile.read(content_length)
             logging.debug('content: %s', content)
             response = 'file contents arriving over websocket'
         else:
