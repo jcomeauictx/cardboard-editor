@@ -78,7 +78,9 @@ create_ap.stop:
 	if [ "$(AP)" ]; then sudo $(CREATE_AP) --stop $(AP); fi
 	# in case that didn't work, kill hostapd instances
 	# (if more than 1, phone remote won't be able to connect
-	if [ "$$(pidof hostapd)" ]; then sudo kill $$(pidof hostapd); fi
+	# (don't stop on failure, it may just have taken a little too
+	#  long for the --stop command to work)
+	-if [ "$$(pidof hostapd)" ]; then sudo kill $$(pidof hostapd); fi
 %.stop:
 	if [ "$$(pidof $*)" ]; then \
 	 echo killing $* >&2; \

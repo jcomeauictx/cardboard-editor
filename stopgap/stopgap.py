@@ -22,6 +22,7 @@ PINGS = {
     'sent': [],
     'received': []
 }
+FILE_CONTENT = 'multipart/form-data'
 
 # pylint: disable=consider-using-f-string
 
@@ -48,8 +49,7 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
         logging.debug('POST headers: %s', self.headers)
         content_length = int(self.headers.get('content-length', '0'))
         content_type = self.headers.get('content-type')
-        supported = 'application/x-www-form-urlencoded'
-        if content_length and content_type == supported:
+        if content_length > 0 and content_type.startswith(FILE_CONTENT):
             content = parse_qs(self.rfile.read(content_length))
             logging.debug('content: %s', content)
             response = 'file contents arriving over websocket'
