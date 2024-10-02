@@ -28,3 +28,4 @@ the same on Android with Chrome.
   punctuation, and left- and right-handed things like `{[(<>)]}` brackets and
   control/alt keys.
 * [Example of menubar](https://www.w3.org/WAI/ARIA/apg/patterns/menubar/examples/menubar-navigation/) and [this one](https://www.w3.org/WAI/ARIA/apg/patterns/menubar/examples/menubar-editor/)
+* Form fields without a `name` attribute will not be uploaded on form submission. I may have known that at one point but had forgotten.
