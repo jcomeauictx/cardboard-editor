@@ -22,7 +22,7 @@ PINGS = {
     'sent': [],
     'received': []
 }
-FILE_CONTENT = 'multipart/form-data'
+FILE_CONTENT = 'multipart/form-data; boundary='
 
 # pylint: disable=consider-using-f-string
 
@@ -50,8 +50,9 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
         content_length = int(self.headers.get('content-length', '0'))
         content_type = self.headers.get('content-type')
         if content_length > 0 and content_type.startswith(FILE_CONTENT):
-            content = self.rfile.read(content_length)
-            logging.debug('content: %s', content)
+            boundary = content_type[len(FILE_CONTENT):].strip(b'-')
+            content = self.rfile.read(content_length).split(b'\r\n')
+            logging.debug('content: %s, boundary: %s', content, boundary)
             response = 'file contents arriving over websocket'
         else:
             logging.error(
