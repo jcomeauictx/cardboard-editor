@@ -50,7 +50,7 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
         content_length = int(self.headers.get('content-length', '0'))
         content_type = self.headers.get('content-type')
         if content_length > 0 and content_type.startswith(FILE_CONTENT):
-            boundary = content_type[len(FILE_CONTENT):].strip(b'-')
+            boundary = content_type[len(FILE_CONTENT):].strip('-')
             content = self.rfile.read(content_length).split(b'\r\n')
             logging.debug('content: %s, boundary: %s', content, boundary)
             response = 'file contents arriving over websocket'
