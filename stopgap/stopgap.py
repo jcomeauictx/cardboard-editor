@@ -2,9 +2,11 @@
 '''
 server for stopgap implementation
 '''
-import sys, os, logging, socket, json  # pylint: disable=multiple-imports
+import sys, os, logging, socket, json, re  # pylint: disable=multiple-imports
 import posixpath as httppath
 from http.server import SimpleHTTPRequestHandler, HTTPStatus, test as serve
+from http.client import parse_headers
+from io import BytesIO
 #from urllib.parse import parse_qs
 from threading import Thread, enumerate as threading_enumerate
 from select import select
@@ -23,7 +25,10 @@ PINGS = {
     'received': []
 }
 FILE_CONTENT = 'multipart/form-data; boundary='
-
+EDIT_FILE = {  # file from `open` menu
+    'headers': None,
+    'body': None
+}
 # pylint: disable=consider-using-f-string
 
 class WebSocketHandler(SimpleHTTPRequestHandler):
@@ -51,9 +56,20 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
         content_type = self.headers.get('content-type')
         if content_length > 0 and content_type.startswith(FILE_CONTENT):
             boundary = content_type[len(FILE_CONTENT):].strip('-')
-            content = self.rfile.read(content_length).split(b'\r\n')
-            logging.debug('content: %s, boundary: %s', content, boundary)
-            response = 'file contents arriving over websocket'
+            pattern = re.compile(r'(?:\r\n)?-*%s-*\r\n' % boundary)
+            raw_content = self.rfile.read(content_length)
+            logging.debug('raw_content: %s, boundary: %s',
+                          raw_content, boundary)
+            content, count = pattern.subn(b'', raw_content)
+            if count == 2:
+                bytesource = BytesIO(content)
+                EDIT_FILE['headers'] = parse_headers(bytesource)
+                EDIT_FILE['body'] = bytesource.read(bytesource)
+                logging.info('file being edited: %s', EDIT_FILE)
+                response = 'file contents arriving over websocket'
+            else:
+                logging.error('%d copies of boundary string found', count)
+                logging.error('not accepting file contents for editing')
         else:
             logging.error(
                 'POST content %d bytes, type %s not supported',
