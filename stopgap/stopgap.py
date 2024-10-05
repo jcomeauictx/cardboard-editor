@@ -63,7 +63,7 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
             content, count = pattern.subn(b'', raw_content)
             if count == 2:
                 bytesource = BytesIO(content)
-                EDIT_FILE['headers'] = parse_headers(bytesource)
+                EDIT_FILE['headers'] = dict(parse_headers(bytesource).items())
                 EDIT_FILE['body'] = bytesource.read()
                 logging.info('file being edited: %s', EDIT_FILE)
                 response = 'file contents arriving over websocket'
