@@ -55,8 +55,8 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
         content_length = int(self.headers.get('content-length', '0'))
         content_type = self.headers.get('content-type')
         if content_length > 0 and content_type.startswith(FILE_CONTENT):
-            boundary = content_type[len(FILE_CONTENT):].strip('-')
-            pattern = re.compile(r'(?:\r\n)?-*%s-*\r\n' % boundary)
+            boundary = content_type[len(FILE_CONTENT):].strip('-').encode()
+            pattern = re.compile(rb'(?:\r\n)?-*%s-*\r\n' % boundary)
             raw_content = self.rfile.read(content_length)
             logging.debug('raw_content: %s, boundary: %s',
                           raw_content, boundary)
@@ -64,7 +64,7 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
             if count == 2:
                 bytesource = BytesIO(content)
                 EDIT_FILE['headers'] = parse_headers(bytesource)
-                EDIT_FILE['body'] = bytesource.read(bytesource)
+                EDIT_FILE['body'] = bytesource.read()
                 logging.info('file being edited: %s', EDIT_FILE)
                 response = 'file contents arriving over websocket'
             else:
