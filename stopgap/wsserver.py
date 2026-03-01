@@ -184,18 +184,23 @@ def demo(connection):
                 logging.debug('masking key: %s', masking_key)
                 offset += 4  # skip past masking key to payload
                 payload = bytearray(packet[offset:])
-                if len(payload) != payload_size:
+                if len(payload) > payload_size:
                     logging.error('payload unexpected size: %s', payload)
                     logging.info('assuming we got more than one packet')
                     # split off additional packet[s]
                     packet = bytes(payload[payload_size:])
                     payload = payload[:payload_size]
+                    previous = b''
+                elif len(payload) < payload_size:
+                    logging.error('received truncated packet %s', packet)
+                    previous = packet
+                    packet = b''
                 else:
                     previous = packet = b''
                 for i in range(payload_size):
                     payload[i] = payload[i] ^ masking_key[i % 4]
                 logging.info('payload: %s', payload)
-                elif opcode == 'close':
+                if opcode == 'close':
                     code, reason = (
                         int.from_bytes(payload[:2], 'big'),
                         payload[2:]
@@ -276,6 +281,53 @@ def package(payload, opcode='text'):
     else:
         raise BufferError('Package length of %d not permitted' % length)
     return packed
+
+def background():
+    '''
+    iPhone trick for running from iSH
+
+    runs in separate thread to keep server active while browser in foreground
+    '''
+    try:
+        with open('/dev/location', encoding='utf-8') as infile:
+            logging.debug('keepalive thread launched in background')
+            while select([infile], [], [infile]):
+                location = infile.read()
+                logging.debug('location: %r', location)
+                if not location:
+                    break
+    except FileNotFoundError:
+        logging.debug('no /dev/location file found')
+
+def get_ip_address(remote='1.1.1.1', port=33434):
+    '''
+    returns external (NAT, if used) IP address of Internet-connected machine
+
+    https://stackoverflow.com/a/25850698/493161
+
+    uses innocuous traceroute port 33434 by default, even though UDP doesn't
+    actually send a packet on `connect`
+
+    1.1.1.1 is a public cloudflare DNS service
+    '''
+    address = None
+    try:
+        probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        probe.connect((remote, port))
+        address = probe.getsockname()[0]
+    except (OSError, IndexError, RuntimeError) as problem:
+        logging.error('Cannot determine IP address: %s', problem)
+    return address
+
+def ping(connection):
+    '''
+    send ping packet
+    '''
+    payload = str(PINGS['serial']).encode()
+    PINGS['serial'] += 1
+    connection.send(package(payload, 'ping'))
+    PINGS['sent'].append(payload)
+    PINGS['sent'][0:-2] = []  # only keep last 2
 
 if __name__ == '__main__':
     try:
