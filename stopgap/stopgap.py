@@ -11,19 +11,12 @@ from io import BytesIO
 from threading import Thread, enumerate as threading_enumerate
 from select import select
 from wsserver import create_key, launch_websocket, package, MAXPACKET, FIN, \
-    OPCODE, SUPPORTED, MASKED, PAYLOAD_SIZE, CLOSE
+    OPCODE, SUPPORTED, MASKED, PAYLOAD_SIZE, CLOSE, PINGS, FAVICONS
 
 ADDRESS = os.getenv('LOCAL') or '127.0.0.1'
 PORT = os.getenv('PORT') or 8000
 KEYS = [chr(n).encode() for n in range(32, 127)]
 CLIENTS = set()
-FAVICONS = ('favicon', 'apple-touch-icon')
-SUPPORTED.extend(['ping', 'pong'])
-PINGS = {
-    'serial': 0,
-    'sent': [],
-    'received': []
-}
 FILE_CONTENT = 'multipart/form-data; boundary='
 EDIT_FILE = {  # file from `open` menu
     'headers': None,

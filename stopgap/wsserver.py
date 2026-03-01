@@ -38,7 +38,7 @@ OPCODE = {
 }
 # allow reverse lookup, mapping (unique) opcode string to text
 OPCODE.update(dict(map(reversed, OPCODE.items())))
-SUPPORTED = ['text', 'binary', 'close']
+SUPPORTED = ['text', 'binary', 'close', 'ping', 'pong']
 MAXPACKET = 4096000  # quit on any packets this size or greater
 MAX_RETRIES = 3
 RESPONSE = (
@@ -50,6 +50,12 @@ RESPONSE = (
 )
 # get `uname -r` in case we need to do something special for iSH (-ish)
 OS_RELEASE = os.uname().release
+FAVICONS = ('favicon', 'apple-touch-icon')
+PINGS = {
+    'serial': 0,
+    'sent': [],
+    'received': []
+}
 
 # pylint: disable=consider-using-f-string
 
@@ -69,6 +75,7 @@ def serve(address=ADDRESS, port=PORT):
     websocket.bind((address, port))
     logging.debug('listening on %s', websocket)
     websocket.listen()
+    ping(connection)  # send a ping to break the ice
     while True:
         connection = websocket.accept()[0]
         nonce = b''
@@ -117,7 +124,7 @@ def demo(connection):
     logging.debug('thread starting handle(%s)', connection)
     counter = retries = 0
     opcode = None
-    packet = b''
+    previous = packet = b''
     closed = False
     while True: # send messages and show responses from the client
         if not closed:
@@ -135,8 +142,14 @@ def demo(connection):
                     continue
                 raise send_failed
         try:
-            logging.debug('receiving packet on %s', connection)
-            packet = packet or connection.recv(MAXPACKET)
+            if PINGS['received']:
+                connection.send(package(PINGS['received'][-1]), 'pong')
+                PINGS['received'][:] = []  # erase this and any prior pings
+            logging.debug('awaiting packet on %s', connection)
+            # attempted fix for when we get a truncated packet with only
+            # the first two bytes, as happened in commit 17aed9a3
+            packet = packet or (previous + connection.recv(MAXPACKET))
+            logging.debug('packet: %s...', packet[:64])
             offset = 0
             if len(packet) >= 2:
                 if (packet[offset] & FIN) != FIN:
@@ -156,11 +169,17 @@ def demo(connection):
                     logging.error('unmasked client data violates standard')
                     raise NotImplementedError('unmasked data not supported')
                 payload_size = packet[offset + 1] & PAYLOAD_SIZE
-                if payload_size > 125:
-                    logging.error('we only support small messages')
-                    logging.error('offending size: %d', payload_size)
-                    raise ValueError('message too large')
-                offset = 2  # move to masking key
+                offset += 2  # move to masking key (for short payload anyway)
+                if payload_size == 126:
+                    payload_size = int.from_bytes(
+                        packet[offset + 2:offset + 4], 'big'
+                    )
+                    offset += 2
+                elif payload_size == 127:
+                    payload_size = int.from_bytes(
+                        packet[offset + 2: offset + 6], 'big'
+                    )
+                    offset += 4
                 masking_key = packet[offset:offset + 4]
                 logging.debug('masking key: %s', masking_key)
                 offset += 4  # skip past masking key to payload
@@ -172,17 +191,10 @@ def demo(connection):
                     packet = bytes(payload[payload_size:])
                     payload = payload[:payload_size]
                 else:
-                    packet = b''
+                    previous = packet = b''
                 for i in range(payload_size):
                     payload[i] = payload[i] ^ masking_key[i % 4]
                 logging.info('payload: %s', payload)
-                if payload == b'stop':
-                    connection.send(package(
-                        CLOSE.to_bytes(2, 'big') +
-                            b"server closed on client's request",
-                        'close')
-                    )
-                    closed = True
                 elif opcode == 'close':
                     code, reason = (
                         int.from_bytes(payload[:2], 'big'),
@@ -191,6 +203,30 @@ def demo(connection):
                     logging.warning('client closed connection: %d, %s',
                                     code, reason)
                     raise StopIteration('remote end initiated closure')
+                if opcode == 'ping':
+                    if len(payload) <= 125:
+                        PINGS['received'].append(payload)
+                        PINGS['received'][0:-2] = []  # only keep last 2
+                    else:
+                        logging.error('ping payload must not exceed 125 bytes')
+                elif opcode == 'pong':
+                    if PINGS['sent']:
+                        if payload != PINGS['sent'][-1]:
+                            logging.error(
+                                'pong payload %s does not match our ping %s',
+                                payload, PINGS['sent'][-1]
+                            )
+                        else:
+                            logging.info('received pong for ping %s', payload)
+                    else:
+                        logging.warning('pong %s unsolicited', payload)
+                    PINGS['sent'][:] = []  # erase any sent pings
+                elif payload == b'stop':
+                    connection.send(package(
+                        CLOSE.to_bytes(2, 'big') +
+                            b"server closed on client's request",
+                        'close')
+                    )
             elif not packet:
                 raise StopIteration('remote end closed unexpectedly')
             else:
