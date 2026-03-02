@@ -124,7 +124,7 @@ endif
 wstest:
 	$(MAKE) LOCAL=127.0.0.1 wsserver
 	$(MAKE) LOCAL=127.0.0.1 SERVER=WSSERVER \
-		WSQUERY="?wsserver=$(WSSERVER_HOST)" httpserver
+		WSQUERY="?wsserver=127.0.0.1:$(WSSERVER_PORT)" httpserver
 	$(MAKE) LOCAL=127.0.0.1 wsserver.stop
 wstest.new:
 	$(MAKE) LOCAL=$(LOCAL) SERVER=WSSERVER httpserver
