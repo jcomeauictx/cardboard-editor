@@ -123,10 +123,11 @@ else
 endif
 wstest:
 	$(MAKE) LOCAL=127.0.0.1 wsserver
-	$(MAKE) LOCAL=127.0.0.1 SERVER=WSSERVER WSQUERY="?wsserver=$(WSSERVER_HOST)" httpserver
+	$(MAKE) LOCAL=127.0.0.1 SERVER=WSSERVER \
+		WSQUERY="?wsserver=$(WSSERVER_HOST)" httpserver
 	$(MAKE) LOCAL=127.0.0.1 wsserver.stop
 wstest.new:
-	$(MAKE) SERVER=WSSERVER httpserver
+	$(MAKE) LOCAL=$(LOCAL) SERVER=WSSERVER httpserver
 %.pylint: %.py
 	$(PYLINT) $<
 %.doctest: %.py
