@@ -24,12 +24,12 @@ NET = $(LOCAL:.1=.0)
 SRC := $(shell dirname $(dir $(PWD)))
 VALIDATOR ?= $(SRC)/validator/build/dist/vnu.jar
 NETRC := $(HOME)/.netrc
-ESSID := $(shell awk '$$2 " " $$3 ~ /^$(LOCAL) login$$/ {print $$4}' $(NETRC))
-KEY := $(shell awk '$$2 " " $$5 ~ /^$(LOCAL) password$$/ {print $$6}' $(NETRC))
+ESSID = $(shell awk '$$2 " " $$3 ~ /^$(LOCAL) login$$/ {print $$4}' $(NETRC))
+KEY = $(shell awk '$$2 " " $$5 ~ /^$(LOCAL) password$$/ {print $$6}' $(NETRC))
 # INTERFACE may be wlan0 or something else entirely
 INTERFACE ?= $(word 1, $(shell ip --brief link show | \
 	     awk '$$1 ~ /^wl/ {print $$1}'))
-AP_ROUTE := ip route | awk '$$1 " " $$NF ~ /^$(NET)\/24 $(LOCAL)$$/ {print $$3}'
+AP_ROUTE = ip route | awk '$$1 " " $$NF ~ /^$(NET)\/24 $(LOCAL)$$/ {print $$3}'
 # leave following line with a single `=` for later evaluation
 AP = $(shell $(AP_ROUTE))
 CREATE_AP := $(wildcard ../../linux-wifi-hotspot/src/scripts/create_ap)
@@ -127,7 +127,7 @@ wstest:
 		WSQUERY="?wsserver=127.0.0.1:$(WSSERVER_PORT)" httpserver
 	$(MAKE) LOCAL=127.0.0.1 wsserver.stop
 wstest.new:
-	$(MAKE) LOCAL=$(LOCAL) SERVER=WSSERVER httpserver
+	$(MAKE) SERVER=WSSERVER httpserver
 %.pylint: %.py
 	$(PYLINT) $<
 %.doctest: %.py
