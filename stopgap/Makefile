@@ -26,7 +26,9 @@ VALIDATOR ?= $(SRC)/validator/build/dist/vnu.jar
 NETRC := $(HOME)/.netrc
 ESSID := $(shell awk '$$2 " " $$3 ~ /^$(LOCAL) login$$/ {print $$4}' $(NETRC))
 KEY := $(shell awk '$$2 " " $$5 ~ /^$(LOCAL) password$$/ {print $$6}' $(NETRC))
-INTERFACE ?= wlp1s0  # may be wlan0 or something else entirely
+# INTERFACE may be wlan0 or something else entirely
+INTERFACE ?= $(word 1, $(shell ip --brief link show | \
+	     awk '$$1 ~ /^wl/ {print $$1}'))
 AP_ROUTE := ip route | awk '$$1 " " $$NF ~ /^$(NET)\/24 $(LOCAL)$$/ {print $$3}'
 # leave following line with a single `=` for later evaluation
 AP = $(shell $(AP_ROUTE))

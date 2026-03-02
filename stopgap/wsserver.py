@@ -75,7 +75,6 @@ def serve(address=ADDRESS, port=PORT):
     websocket.bind((address, port))
     logging.debug('listening on %s', websocket)
     websocket.listen()
-    ping(connection)  # send a ping to break the ice
     while True:
         connection = websocket.accept()[0]
         nonce = b''
@@ -126,6 +125,7 @@ def demo(connection):
     opcode = None
     previous = packet = b''
     closed = False
+    ping(connection)  # send a ping to break the ice
     while True: # send messages and show responses from the client
         if not closed:
             message = MESSAGES[counter % len(MESSAGES)]
