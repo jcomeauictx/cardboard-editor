@@ -47,6 +47,7 @@ class WebSocketHandler(SimpleHTTPRequestHandler):
         logging.debug('POST headers: %s', self.headers)
         content_length = int(self.headers.get('content-length', '0'))
         content_type = self.headers.get('content-type')
+        response = None
         if content_length > 0 and content_type.startswith(FILE_CONTENT):
             boundary = content_type[len(FILE_CONTENT):].strip('-').encode()
             pattern = re.compile(rb'(?:\r\n)?-*%s-*\r\n' % boundary)

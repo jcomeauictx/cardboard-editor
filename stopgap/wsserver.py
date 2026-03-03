@@ -8,6 +8,7 @@ import sys, os, time, socket, logging  # pylint: disable=multiple-imports
 from base64 import b64encode
 from hashlib import sha1
 from threading import Thread, enumerate as threading_enumerate
+from select import select
 logging.basicConfig(level=logging.DEBUG if __debug__ else logging.INFO)
 
 ADDRESS = os.getenv('LOCAL') or '127.0.0.1'
