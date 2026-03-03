@@ -59,10 +59,12 @@ JSCRIPTS := $(filter-out eslint.config.js, $(wildcard *.js))
 JSLINT := $(shell which eslint jshint jslint true | head -n 1)
 JAVA := $(shell which java true | head -n 1)
 VALIDATE := $(JAVA) -jar $(VALIDATOR) --Werror
+# tell wsserver to use its original socket.socket server
+USE_BARE_SOCKET ?= 1
 ifneq ($(SHOWENV),)
 	export
 else
-	export LOCAL
+	export LOCAL USE_BARE_SOCKET
 endif
 all: lint doctest stop credentials create_ap httpserver
 fast: stop credentials create_ap httpserver
