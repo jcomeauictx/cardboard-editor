@@ -59,7 +59,7 @@ PINGS = {
 
 # pylint: disable=consider-using-f-string
 
-def serve(address=ADDRESS, port=PORT):
+def socket_serve(address=ADDRESS, port=PORT):
     '''
     Create socket and listen
     '''
@@ -331,6 +331,6 @@ def ping(connection):
 
 if __name__ == '__main__':
     try:
-        serve()
+        socket_serve()
     finally:
         logging.debug('exiting __main__')
