@@ -4,11 +4,16 @@ websocket server
 
 adapted from https://en.wikipedia.org/wiki/WebSocket
 '''
-import sys, os, time, socket, logging  # pylint: disable=multiple-imports
+import sys, os, time, socket, re, logging  # pylint: disable=multiple-imports
+import json
+import posixpath as httppath  # for parsing URLs like filepaths
 from base64 import b64encode
 from hashlib import sha1
 from threading import Thread, enumerate as threading_enumerate
 from select import select
+from io import BytesIO
+from http.server import SimpleHTTPRequestHandler, HTTPStatus, test as serve
+from http.client import parse_headers
 logging.basicConfig(level=logging.DEBUG if __debug__ else logging.INFO)
 
 ADDRESS = os.getenv('LOCAL') or '127.0.0.1'
@@ -57,8 +62,103 @@ PINGS = {
     'sent': [],
     'received': []
 }
+UPLOAD = {  # file from `input type="file"`
+    'headers': None,
+    'body': None
+}
+CLIENTS = set()
+FILE_CONTENT = 'multipart/form-data; boundary='
 
 # pylint: disable=consider-using-f-string
+
+class WebSocketHandler(SimpleHTTPRequestHandler):
+    '''
+    subclass to take care of some things differently from system library
+    '''
+    def do_GET(self):
+        '''
+        handle WebSocket requests
+        '''
+        logging.debug('handling GET request for %s', self.path)
+        logging.debug('socket at do_GET(): %s', self.connection)
+        return super().do_GET()
+
+    def do_POST(self):  # pylint: disable=invalid-name
+        '''
+        handle POST calls with command functions
+        '''
+        logging.debug('handling POST request for %s', self.path)
+        command = self.path.lstrip('/')
+        if command in dir(self) and callable(getattr(self, command)):
+            return getattr(self, command)()
+        logging.debug('POST headers: %s', self.headers)
+        content_length = int(self.headers.get('content-length', '0'))
+        content_type = self.headers.get('content-type')
+        response = None
+        if content_length > 0 and content_type.startswith(FILE_CONTENT):
+            boundary = content_type[len(FILE_CONTENT):].strip('-').encode()
+            pattern = re.compile(rb'(?:\r\n)?-*%s-*\r\n' % boundary)
+            raw_content = self.rfile.read(content_length)
+            # we're only accepting uploads with boundary strings top & bottom
+            logging.debug('raw_content: %s, boundary: %s',
+                          raw_content, boundary)
+            # remove the boundary strings, leaving the raw uplaod bytes
+            content, count = pattern.subn(b'', raw_content)
+            if count == 2:
+                bytesource = BytesIO(content)
+                UPLOAD['headers'] = dict(parse_headers(bytesource).items())
+                UPLOAD['body'] = bytesource.read()
+                logging.info('file uploaded: %s', UPLOAD)
+                response = 'file contents arriving over websocket'
+            else:
+                logging.error('%d copies of boundary string found', count)
+                logging.error('not accepting upload')
+        else:
+            logging.error(
+                'POST content %d bytes, type %s not supported',
+                 content_length, content_type
+            )
+            response = 'file contents unavailable, check log'
+        self.send_response(HTTPStatus.NOT_MODIFIED, response)
+        self.end_headers()
+        return None
+
+    def send_head(self):
+        '''
+        handle favicon.ico and websocket requests internally
+        '''
+        logging.debug('WebSocketHandler.send_head() called')
+        if httppath.basename(self.path).startswith(FAVICONS):
+            logging.debug('sending fake (empty) favicon.ico')
+            self.send_response(HTTPStatus.OK, 'providing empty icon')
+            self.send_header('Content-type', 'image/png')
+            self.send_header('Content-Length', '0')
+            self.end_headers()
+            return None
+        if 'Sec-WebSocket-Key' in self.headers:
+            logging.debug('websocket request received')
+            if os.getenv('FORCE_WS_ERROR'):  # `make FORCE_WS_ERROR=1`
+                logging.debug('pretending not to recognize WS request')
+                self.send_response(HTTPStatus.NOT_IMPLEMENTED,
+                                   'pretending not to recognize, for debugging'
+                )
+                self.end_headers()
+                return None
+            nonce = self.headers['Sec-WebSocket-Key'].encode()
+            self.send_response_only(HTTPStatus.SWITCHING_PROTOCOLS,
+                                    'switching protocols')
+            self.send_header('Upgrade', 'websocket')
+            self.send_header('Connection', 'Upgrade')
+            self.send_header('Sec-WebSocket-Accept', create_key(nonce).decode())
+            self.end_headers()
+            # disable keep-alive from this point
+            # pylint: disable=attribute-defined-outside-init
+            self.close_connection = True
+            logging.debug('sent upgrade response')
+            logging.debug('socket before launch_websocket: %s', self.connection)
+            launch_websocket(nonce.decode(), self.connection, handler)
+            return None
+        return super().send_head()
 
 def socket_serve(address=ADDRESS, port=PORT):
     '''
@@ -100,7 +200,7 @@ def create_key(nonce):
     logging.debug('found nonce: %s', nonce)
     return b64encode(sha1(nonce + MAGIC).digest())
 
-def launch_websocket(nonce, connection, handler):
+def launch_websocket(nonce, connection, websocket_handler):
     '''
     launch thread to handle websocket
 
@@ -112,7 +212,7 @@ def launch_websocket(nonce, connection, handler):
     '''
     socketcopy = connection.dup()
     connection.close()
-    thread = Thread(target=handler, args=(socketcopy,),
+    thread = Thread(target=websocket_handler, args=(socketcopy,),
                     name=nonce, daemon=True)
     thread.start()
 
@@ -283,6 +383,153 @@ def package(payload, opcode='text'):
         raise BufferError('Package length of %d not permitted' % length)
     return packed
 
+def handler(connection):
+    '''
+    handle two-way communications with websocket client
+    '''
+    # pylint: disable=too-many-locals, too-many-branches, too-many-statements
+    logging.debug('thread starting handle(%s)', connection)
+    opcode = None
+    previous = packet = b''
+    serial = 0  # serial number for keyhits
+    # pylint: disable=too-many-nested-blocks
+    ping(connection)  # send a ping to break the ice
+    while True: # receive keyhits and dispatch them back out to all threads
+        try:
+            if PINGS['received']:
+                connection.send(package(PINGS['received'][-1]), 'pong')
+                PINGS['received'][:] = []  # erase this and any prior pings
+            logging.debug('awaiting packet on %s', connection)
+            # attempted fix for when we get a truncated packet with only
+            # the first two bytes, as happened in commit 17aed9a3
+            packet = packet or (previous + connection.recv(MAXPACKET))
+            logging.debug('packet: %s...', packet[:64])
+            offset = 0
+            serialized = None  # for joining key with serial number
+            if len(packet) >= 2:
+                if (packet[offset] & FIN) != FIN:
+                    logging.error('we only support unfragmented messages')
+                    raise NotImplementedError('fragments not supported')
+                if len(packet) == MAXPACKET:
+                    logging.error('large packets not supported')
+                    raise StopIteration('packet too large, cannot re-sync')
+                opcode = OPCODE[packet[offset] & 0xf]
+                logging.debug('opcode: %s', opcode)
+                if opcode not in SUPPORTED:
+                    logging.error('we only support opcodes %s', SUPPORTED)
+                    logging.error('offending opcode: %d', opcode)
+                    raise NotImplementedError('opcode not supported')
+                masked = bool(packet[offset + 1] & MASKED)
+                if not masked:
+                    logging.error('unmasked client data violates standard')
+                    raise NotImplementedError('unmasked data not supported')
+                payload_size = packet[offset + 1] & PAYLOAD_SIZE
+                offset += 2  # move to masking key (for short payload anyway)
+                if payload_size == 126:
+                    payload_size = int.from_bytes(
+                        packet[offset + 2:offset + 4], 'big'
+                    )
+                    offset += 2
+                elif payload_size == 127:
+                    payload_size = int.from_bytes(
+                        packet[offset + 2: offset + 6], 'big'
+                    )
+                    offset += 4
+                masking_key = packet[offset:offset + 4]
+                logging.debug('masking key: %s', masking_key)
+                offset += 4  # skip past masking key to payload
+                payload = bytearray(packet[offset:])
+                if len(payload) > payload_size:
+                    logging.error('payload unexpected size: %s', payload)
+                    logging.info('assuming we got more than one packet')
+                    # split off additional packet[s]
+                    packet = bytes(payload[payload_size:])
+                    payload = payload[:payload_size]
+                    previous = b''
+                elif len(payload) < payload_size:
+                    logging.error('received truncated packet %s', packet)
+                    previous = packet
+                    packet = b''
+                else:
+                    previous = packet = b''
+                for i in range(payload_size):
+                    payload[i] = payload[i] ^ masking_key[i % 4]
+                logging.info('payload: %s', payload)
+                if opcode == 'close':
+                    code, reason = (
+                        int.from_bytes(payload[:2], 'big'),
+                        payload[2:]
+                    )
+                    logging.warning('client closed connection: %d, %s',
+                                    code, reason)
+                    raise StopIteration('remote end initiated closure')
+                if opcode == 'ping':
+                    if len(payload) <= 125:
+                        PINGS['received'].append(payload)
+                        PINGS['received'][0:-2] = []  # only keep last 2
+                    else:
+                        logging.error('ping payload must not exceed 125 bytes')
+                elif opcode == 'pong':
+                    if PINGS['sent']:
+                        if payload != PINGS['sent'][-1]:
+                            logging.error(
+                                'pong payload %s does not match our ping %s',
+                                payload, PINGS['sent'][-1]
+                            )
+                        else:
+                            logging.info('received pong for ping %s', payload)
+                    else:
+                        logging.warning('pong %s unsolicited', payload)
+                    PINGS['sent'][:] = []  # erase any sent pings
+                elif payload == b'stop':
+                    connection.send(package(
+                        CLOSE.to_bytes(2, 'big') +
+                            b"server closed on client's request",
+                        'close')
+                    )
+                else:
+                    try:
+                        message = json.loads(payload)
+                    except json.JSONDecodeError:
+                        logging.warning('could not decode %r', payload)
+                        continue
+                    # serial numbers must be nonzero, so increment first.
+                    # same key/serial number gets sent to all clients.
+                    serial += 1
+                    echo = message.pop('echo')
+                    message.update({'serial': serial})
+                    serialized = pack(message)
+                    for client in list(CLIENTS):
+                        if client is connection and not echo:
+                            logging.debug('not echoing %s back to sender %s',
+                                          message['key'], client)
+                        else:
+                            try:
+                                logging.debug("sending key %r to %s",
+                                              message['key'], client)
+                                client.send(package(serialized))
+                            except OSError as broken:
+                                logging.warning(
+                                    'removing client %s after failed send: %s',
+                                    client, broken
+                                )
+                                CLIENTS.remove(client)
+            elif not packet:
+                raise StopIteration('remote end closed unexpectedly')
+            else:
+                raise ValueError('insufficient packet length: %d' % len(packet))
+        except (NotImplementedError, ValueError, IndexError) as error:
+            logging.error('error in processing message: %s', error)
+        except (StopIteration, ConnectionResetError, BrokenPipeError) as ended:
+            logging.info('remote end closed: %s', ended)
+            try:  # ignore failure on shutdown
+                connection.shutdown(socket.SHUT_WR)
+                connection.close()
+            finally:
+                threads = threading_enumerate()
+                logging.debug('threads remaining: %s', threads)
+                sys.exit(0)
+
 def background():
     '''
     iPhone trick for running from iSH
@@ -320,6 +567,12 @@ def get_ip_address(remote='1.1.1.1', port=33434):
         logging.error('Cannot determine IP address: %s', problem)
     return address
 
+def pack(message_dict):
+    '''
+    pack message, passed as dict, into shortest possible JSON bytestring
+    '''
+    return json.dumps(message_dict, separators=(',', ':')).encode()
+
 def ping(connection):
     '''
     send ping packet
@@ -332,6 +585,10 @@ def ping(connection):
 
 if __name__ == '__main__':
     try:
-        socket_serve()
+        if os.getenv('USE_BARE_SOCKET'):
+            socket_serve()
+        else:
+            serve(HandlerClass=WebSocketHandler, bind=ADDRESS,
+                  protocol='HTTP/1.1', port=PORT)
     finally:
         logging.debug('exiting __main__')
