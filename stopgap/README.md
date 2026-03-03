@@ -6,13 +6,15 @@ Android has Termux and X Server; iPhone has iSH and Mocha X11 (lite and pro, the
 
 Will start with both the keyboard and viewer on the same device, then on different devices, and finally try splitting the screen to make the Cardboard goggles usable.
 
+## Websocket test
+ `make wstest` will launch a webserver, a websocket server, and a browser.
+ The wstest.html page, served from the webserver, will connect to the
+ websocket server and respond to test messages.
+
 ## Developer notes
-* any nontrivial tkinter code segfaults in FcFontRenderPrepare in /usr/lib/libfontconfig.so.1
-* [strace no help](https://github.com/sharkdp/bat/issues/2575)
-* [ministrace](https://blog.nelhage.com/2010/08/write-yourself-an-strace-in-70-lines-of-code/)
-* 2024-06-21, giving up on iSH/Mocha, can't figure out the segfault in tkinter.
-Going to switch to Python backend and browser (Safari) foreground. I can do
-the same on Android with Chrome.
+* must install at least one font in iSH or any nontrivial tkinter code will
+  segfault: `apk add unifont` should be sufficient. I found this out too late,
+  however, and had already switched to a Python backend with Safari frontend.
 * [use this as a guide](https://www.geeksforgeeks.org/build-a-virtual-keyboard-using-html-css-javascript/)
 * [inserting text into textarea](https://phuoc.ng/collection/html-dom/insert-text-into-a-text-area-at-the-current-position/)
 * Use a private network for syncing the two phones, or other devices. For linux, there is the [linux-wifi-hotspot](https://github.com/jcomeauictx/linux-wifi-hotspot)
